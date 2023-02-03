@@ -54,6 +54,16 @@ In order to generate it, please do the following steps:
 #### :hash: Webstore
 1. Query Webstore (required)
 
+#### :hash: Webstore Product Import
+1. Retrieve WebStoreCatalog
+2. Retrieve Content Document
+3. Retrieve ManagedContentSpace
+4. Retrieve Original Pricebook
+5. Retrieve Sales Pricebook
+6. Retrieve Entitlement Policy
+7. Import Sample Products
+8. Import Product CSV
+
 #### :hash: Webstore Products
 1. Get Products
 2. Get Product Details
