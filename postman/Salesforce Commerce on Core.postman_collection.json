@@ -190,6 +190,278 @@
 			"name": "Webstore Product Import",
 			"item": [
 				{
+					"name": "Upload CSV",
+					"item": [
+						{
+							"name": "base64 encode file",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"require('btoa');",
+											"",
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test('Validate the response and save collection variables', () => {",
+											"    const body = pm.response.json();",
+											"    pm.expect(body.data).to.exist;",
+											"    pm.expect(body.data).to.be.a('string');",
+											"    const { data: rawData } = body;",
+											"    const encodedFileData = btoa(rawData);",
+											"    pm.collectionVariables.set('_versionData', encodedFileData)",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "file",
+									"file": {
+										"src": ""
+									}
+								},
+								"url": {
+									"raw": "postman-echo.com/post",
+									"host": [
+										"postman-echo",
+										"com"
+									],
+									"path": [
+										"post"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Upload Content",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 201', () => {",
+											"    pm.response.to.have.status(201);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test('Validate the response', () => {",
+											"    const data = pm.response.json();",
+											"    pm.expect(data.success).to.be.true;",
+											"    pm.expect(data.id).to.exist;",
+											"    pm.expect(data.id).to.be.a.string;",
+											"    pm.collectionVariables.set('_contentVersionId', data.id);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{_accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"Title\": \"{{productCsvFileName}}\",\n    \"PathOnClient\": \"{{productCsvFileName}}.csv\",\n    \"ContentLocation\": \"S\",\n    \"VersionData\": \"{{_versionData}}\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{_instanceUrl}}/services/data/v{{version}}/sobjects/ContentVersion",
+									"host": [
+										"{{_instanceUrl}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"sobjects",
+										"ContentVersion"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Retrieve Content Document by ID",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test('Validate the response and save collection variables', () => {",
+											"    const data = pm.response.json();",
+											"    pm.expect(data.records).to.exist;",
+											"    pm.expect(data.records).to.be.an('array');",
+											"    pm.expect(data.records.length).to.eql(1);",
+											"    const contentVersion = data.records[0];",
+											"    pm.expect(contentVersion.ContentDocumentId).to.exist;",
+											"    pm.expect(contentVersion.ContentDocumentId).to.be.a.string;",
+											"    pm.collectionVariables.set('_contentDocumentId', contentVersion.ContentDocumentId);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{_accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{_instanceUrl}}/services/data/v{{version}}/query/?q=SELECT+Id,+ContentDocumentId+FROM+ContentVersion+WHERE+Id=+'{{_contentVersionId}}'",
+									"host": [
+										"{{_instanceUrl}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"query",
+										""
+									],
+									"query": [
+										{
+											"key": "q",
+											"value": "SELECT+Id,+ContentDocumentId+FROM+ContentVersion+WHERE+Id=+'{{_contentVersionId}}'"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Retrieve Content Document by Title",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test('Validate the response and save collection variables', () => {",
+											"    const data = pm.response.json();",
+											"    pm.expect(data.records).to.exist;",
+											"    pm.expect(data.records).to.be.an('array');",
+											"    pm.expect(data.records.length).to.eql(1);",
+											"    const contentDocument = data.records[0];",
+											"    pm.expect(contentDocument.Id).to.exist;",
+											"    pm.expect(contentDocument.Id).to.be.a.string;",
+											"    pm.collectionVariables.set('_contentDocumentId', contentDocument.Id);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{_accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{_instanceUrl}}/services/data/v{{version}}/query/?q=SELECT+Id,+Title+FROM+ContentDocument+WHERE+Title+=+'{{productCsvFileName}}'+LIMIT+1",
+									"host": [
+										"{{_instanceUrl}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"query",
+										""
+									],
+									"query": [
+										{
+											"key": "q",
+											"value": "SELECT+Id,+Title+FROM+ContentDocument+WHERE+Title+=+'{{productCsvFileName}}'+LIMIT+1"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
 					"name": "Retrieve WebStoreCatalog",
 					"event": [
 						{
@@ -256,79 +528,6 @@
 								{
 									"key": "q",
 									"value": "SELECT+Id,+Name,+ProductCatalogId,+SalesStoreId+FROM+WebStoreCatalog+WHERE+SalesStoreId+=+'{{_webStoreId}}'"
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Retrieve Content Document",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test('Status code is 200', () => {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test('Response is valid and has a JSON body', () => {",
-									"     pm.response.to.be.success;",
-									"     pm.response.to.be.withBody;",
-									"     pm.response.to.be.json;",
-									"});",
-									"",
-									"pm.test('Validate the response and save collection variables', () => {",
-									"    const data = pm.response.json();",
-									"    pm.expect(data.records).to.exist;",
-									"    pm.expect(data.records).to.be.an('array');",
-									"    pm.expect(data.records.length).to.eql(1);",
-									"    const contentDocument = data.records[0];",
-									"    pm.expect(contentDocument.Id).to.exist;",
-									"    pm.expect(contentDocument.Id).to.be.a.string;",
-									"    pm.collectionVariables.set('_contentVersionId', contentDocument.Id);",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{_accessToken}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "GET",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{_instanceUrl}}/services/data/v{{version}}/query/?q=SELECT+Id,+Title+FROM+ContentDocument+WHERE+Title+=+'{{productCsvFileName}}'+LIMIT+1",
-							"host": [
-								"{{_instanceUrl}}"
-							],
-							"path": [
-								"services",
-								"data",
-								"v{{version}}",
-								"query",
-								""
-							],
-							"query": [
-								{
-									"key": "q",
-									"value": "SELECT+Id,+Title+FROM+ContentDocument+WHERE+Title+=+'{{productCsvFileName}}'+LIMIT+1"
 								}
 							]
 						}
@@ -628,6 +827,75 @@
 					"response": []
 				},
 				{
+					"name": "Import Product CSV",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 201', () => {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test('Response is valid and has a JSON body', () => {",
+									"     pm.response.to.be.success;",
+									"     pm.response.to.be.withBody;",
+									"     pm.response.to.be.json;",
+									"});",
+									"",
+									"pm.test('Validate the response', () => {",
+									"    const data = pm.response.json();",
+									"    pm.expect(data.status).to.exist;",
+									"    pm.expect(data.status).to.be.a.string;",
+									"    pm.expect(data.status).to.eql(\"Complete\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{_accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"importConfiguration\": {\n        \"importSource\": {\n            \"contentVersionId\": \"{{_contentDocumentId}}\"\n        },\n        \"importSettings\": {\n            \"category\": {\n                \"productCatalogId\": \"{{_productCatalogId}}\"\n            },\n            \"media\": {\n                \"cmsWorkspaceId\": \"{{_cmsWorkspaceId}}\"\n            },\n            \"price\": {\n                \"pricebookAliasToIdMapping\": {\n                    \"original\": \"{{_priceBookOriginalId}}\",\n                    \"sales\": \"{{_priceBookSalesId}}\"\n                }\n            },\n            \"entitlement\": {\n                \"defaultEntitlementPolicyId\": \"{{_defaultEntitlementPolicyId}}\"\n            }\n        }\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/management/webstores/{{_webStoreId}}/product-import",
+							"host": [
+								"{{_instanceUrl}}"
+							],
+							"path": [
+								"services",
+								"data",
+								"v{{version}}",
+								"commerce",
+								"management",
+								"webstores",
+								"{{_webStoreId}}",
+								"product-import"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Import Sample Products",
 					"event": [
 						{
@@ -671,75 +939,6 @@
 						"body": {
 							"mode": "raw",
 							"raw": "{\n    \"importConfiguration\": {\n        \"importSource\": {\n            \"sampleData\": \"{{importSourceSampleData}}\"\n        },\n        \"importSettings\": {\n            \"category\": {\n                \"productCatalogId\": \"{{_productCatalogId}}\"\n            },\n            \"media\": {\n                \"cmsWorkspaceId\": \"{{_cmsWorkspaceId}}\"\n            },\n            \"price\": {\n                \"pricebookAliasToIdMapping\": {\n                    \"original\": \"{{_priceBookOriginalId}}\",\n                    \"sales\": \"{{_priceBookSalesId}}\"\n                }\n            },\n            \"entitlement\": {\n                \"defaultEntitlementPolicyId\": \"{{_defaultEntitlementPolicyId}}\"\n            }\n        }\n    }\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/management/webstores/{{_webStoreId}}/product-import",
-							"host": [
-								"{{_instanceUrl}}"
-							],
-							"path": [
-								"services",
-								"data",
-								"v{{version}}",
-								"commerce",
-								"management",
-								"webstores",
-								"{{_webStoreId}}",
-								"product-import"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Import Product CSV",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test('Status code is 201', () => {",
-									"    pm.response.to.have.status(201);",
-									"});",
-									"",
-									"pm.test('Response is valid and has a JSON body', () => {",
-									"     pm.response.to.be.success;",
-									"     pm.response.to.be.withBody;",
-									"     pm.response.to.be.json;",
-									"});",
-									"",
-									"pm.test('Validate the response', () => {",
-									"    const data = pm.response.json();",
-									"    pm.expect(data.status).to.exist;",
-									"    pm.expect(data.status).to.be.a.string;",
-									"    pm.expect(data.status).to.eql(\"Complete\");",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{_accessToken}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"importConfiguration\": {\n        \"importSource\": {\n            \"contentVersionId\": \"{{_contentVersionId}}\"\n        },\n        \"importSettings\": {\n            \"category\": {\n                \"productCatalogId\": \"{{_productCatalogId}}\"\n            },\n            \"media\": {\n                \"cmsWorkspaceId\": \"{{_cmsWorkspaceId}}\"\n            },\n            \"price\": {\n                \"pricebookAliasToIdMapping\": {\n                    \"original\": \"{{_priceBookOriginalId}}\",\n                    \"sales\": \"{{_priceBookSalesId}}\"\n                }\n            },\n            \"entitlement\": {\n                \"defaultEntitlementPolicyId\": \"{{_defaultEntitlementPolicyId}}\"\n            }\n        }\n    }\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -3132,56 +3331,6 @@
 					"response": []
 				}
 			]
-		}
-	],
-	"variable": [
-		{
-			"key": "_accessToken",
-			"value": ""
-		},
-		{
-			"key": "_instanceUrl",
-			"value": ""
-		},
-		{
-			"key": "_userId",
-			"value": ""
-		},
-		{
-			"key": "_orgId",
-			"value": ""
-		},
-		{
-			"key": "_webStoreId",
-			"value": ""
-		},
-		{
-			"key": "_webStoreCatalogId",
-			"value": ""
-		},
-		{
-			"key": "_productCatalogId",
-			"value": ""
-		},
-		{
-			"key": "_cmsWorkspaceId",
-			"value": ""
-		},
-		{
-			"key": "_priceBookOriginalId",
-			"value": ""
-		},
-		{
-			"key": "_priceBookSalesId",
-			"value": ""
-		},
-		{
-			"key": "_defaultEntitlementPolicyId",
-			"value": ""
-		},
-		{
-			"key": "_contentVersionId",
-			"value": ""
 		}
 	]
 }

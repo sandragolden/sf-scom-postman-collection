@@ -55,14 +55,21 @@ In order to generate it, please do the following steps:
 1. Query Webstore (required)
 
 #### :hash: Webstore Product Import
+
+##### :hash: Upload CSV
+1. base64 encode file
+2. Upload Content
+3. Retrieve Content Document by ID
+4. Retrieve Content Document by Title
+
+##### Product Import
 1. Retrieve WebStoreCatalog
-2. Retrieve Content Document
-3. Retrieve ManagedContentSpace
-4. Retrieve Original Pricebook
-5. Retrieve Sales Pricebook
-6. Retrieve Entitlement Policy
+2. Retrieve ManagedContentSpace
+3. Retrieve Original Pricebook
+4. Retrieve Sales Pricebook
+5. Retrieve Entitlement Policy
+6. Import Product CSV
 7. Import Sample Products
-8. Import Product CSV
 
 #### :hash: Webstore Products
 1. Get Products
