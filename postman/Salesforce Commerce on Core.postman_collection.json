@@ -187,8 +187,1386 @@
 			]
 		},
 		{
+			"name": "Create Payment Gateway",
+			"item": [
+				{
+					"name": "Create Payment Gateway Provider",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', () => {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response is valid and has a JSON body', () => {",
+									"     pm.response.to.be.success;",
+									"     pm.response.to.be.withBody;",
+									"     pm.response.to.be.json;",
+									"});",
+									"",
+									"pm.test('Validate result and save collection variables', () => {",
+									"    let data = pm.response.json();",
+									"    const paymentGatewayProvider = data.compositeResponse.find((result) => result.referenceId === 'paymentGatewayProvider');",
+									"    pm.expect(paymentGatewayProvider).to.exist;",
+									"    pm.expect(paymentGatewayProvider.body).to.exist;",
+									"    pm.expect(paymentGatewayProvider.body.id).to.exist;",
+									"    pm.expect(paymentGatewayProvider.body.id).to.be.a.string;",
+									"    pm.collectionVariables.set('_paymentGatewayProviderId', paymentGatewayProvider.body.id);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{_accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"allOrNone\": true,\n    \"compositeRequest\": [\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id+FROM+ApexClass+WHERE+Name+=+'{{paymentGatewayProviderApexClassName}}'\",\n            \"referenceId\": \"apexClass\"\n        },\n        {\n            \"method\": \"POST\",\n            \"url\": \"/services/data/v{{version}}/sobjects/PaymentGatewayProvider\",\n            \"referenceId\": \"paymentGatewayProvider\",\n            \"body\": {\n                \"ApexAdapterId\": \"@{apexClass.records[0].Id}\",\n                \"DeveloperName\": \"{{paymentGatewayProviderDeveloperName}}\",\n                \"MasterLabel\": \"{{paymentGatewayProviderMasterLabel}}\",\n                \"Language\": \"en_US\",\n                \"IdempotencySupported\": \"Yes\"\n            }\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{_instanceUrl}}/services/data/v{{version}}/composite",
+							"host": [
+								"{{_instanceUrl}}"
+							],
+							"path": [
+								"services",
+								"data",
+								"v{{version}}",
+								"composite"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Payment Gateway",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', () => {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response is valid and has a JSON body', () => {",
+									"     pm.response.to.be.success;",
+									"     pm.response.to.be.withBody;",
+									"     pm.response.to.be.json;",
+									"});",
+									"",
+									"const validateResults = (refId) => {",
+									"    pm.test(`Validate ${refId}`, () => {",
+									"        let data = pm.response.json();",
+									"        const refResult = data.compositeResponse.find((result) => result.referenceId === refId);",
+									"        pm.expect(refResult).to.exist;",
+									"        pm.expect(refResult.body).to.exist;",
+									"        pm.expect(refResult.body.records).to.exist;",
+									"        pm.expect(refResult.body.records).to.be.an('array');",
+									"        pm.expect(refResult.body.records.length).to.eql(1);",
+									"        pm.expect(refResult.body.records[0].Id).to.exist;",
+									"        pm.expect(refResult.body.records[0].Id).to.be.a.string;",
+									"    });",
+									"};",
+									"",
+									"validateResults('apexClass');",
+									"validateResults('namedCredential');",
+									"validateResults('paymentGatewayProvider');",
+									"",
+									"pm.test('Validate paymentGateway', () => {",
+									"    let data = pm.response.json();",
+									"    const paymentGateway = data.compositeResponse.find((result) => result.referenceId === 'paymentGateway');",
+									"    pm.expect(paymentGateway).to.exist;",
+									"    pm.expect(paymentGateway.httpStatusCode).to.eql(201);",
+									"    pm.expect(paymentGateway.body.id).to.exist;",
+									"    pm.expect(paymentGateway.body.id).to.be.a.string;",
+									"    pm.expect(paymentGateway.body.success).to.exist;",
+									"    pm.expect(paymentGateway.body.success).to.eql(true);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{_accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"allOrNone\": true,\n    \"compositeRequest\": [\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id+FROM+ApexClass+WHERE+Name+=+'{{paymentGatewayProviderApexClassName}}'+LIMIT+1\",\n            \"referenceId\": \"apexClass\"\n        },\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id+FROM+NamedCredential+WHERE+DeveloperName+=+'{{namedCredentialDeveloperName}}'+LIMIT+1\",\n            \"referenceId\": \"namedCredential\"\n        },\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id+FROM+PaymentGatewayProvider+WHERE+ApexAdapterId+=+'@{apexClass.records[0].Id}'+AND+DeveloperName+=+'{{paymentGatewayProviderDeveloperName}}'+LIMIT+1\",\n            \"referenceId\": \"paymentGatewayProvider\"\n        },\n        {\n            \"method\": \"POST\",\n            \"url\": \"/services/data/v{{version}}/sobjects/PaymentGateway\",\n            \"referenceId\": \"paymentGateway\",\n            \"body\": {\n                \"PaymentGatewayProviderId\": \"@{paymentGatewayProvider.records[0].Id}\",\n                \"MerchantCredentialId\": \"@{namedCredential.records[0].Id}\",\n                \"Status\": \"Active\",\n                \"PaymentGatewayName\": \"{{paymentGatewayName}}\",\n                \"ExternalReference\": \"{{paymentGatewayName}}\"\n            }\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{_instanceUrl}}/services/data/v{{version}}/composite",
+							"host": [
+								"{{_instanceUrl}}"
+							],
+							"path": [
+								"services",
+								"data",
+								"v{{version}}",
+								"composite"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Query Payment Gateway",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', () => {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response is valid and has a JSON body', () => {",
+									"     pm.response.to.be.success;",
+									"     pm.response.to.be.withBody;",
+									"     pm.response.to.be.json;",
+									"});",
+									"",
+									"const validateResults = (refId) => {",
+									"    pm.test(`Validate ${refId}`, () => {",
+									"        let data = pm.response.json();",
+									"        const refResult = data.compositeResponse.find((result) => result.referenceId === refId);",
+									"        pm.expect(refResult).to.exist;",
+									"        pm.expect(refResult.body).to.exist;",
+									"        pm.expect(refResult.body.records).to.exist;",
+									"        pm.expect(refResult.body.records).to.be.an('array');",
+									"        pm.expect(refResult.body.records.length).to.eql(1);",
+									"        pm.expect(refResult.body.records[0].Id).to.exist;",
+									"        pm.expect(refResult.body.records[0].Id).to.be.a.string;",
+									"    });",
+									"};",
+									"",
+									"validateResults('apexClass');",
+									"validateResults('namedCredential');",
+									"validateResults('paymentGatewayProvider');",
+									"validateResults('paymentGateway');"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{_accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"allOrNone\": true,\n    \"compositeRequest\": [\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,+Name,+Status,+ApiVersion+FROM+ApexClass+WHERE+Name+=+'{{paymentGatewayProviderApexClassName}}'+LIMIT+1\",\n            \"referenceId\": \"apexClass\"\n        },\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,+DeveloperName,+Endpoint+FROM+NamedCredential+WHERE+DeveloperName+=+'{{namedCredentialDeveloperName}}'+LIMIT+1\",\n            \"referenceId\": \"namedCredential\"\n        },\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,+DeveloperName,+MasterLabel,+ApexAdapterId,+IdempotencySupported,+Language+FROM+PaymentGatewayProvider+WHERE+ApexAdapterId+=+'@{apexClass.records[0].Id}'+AND+DeveloperName+=+'{{paymentGatewayProviderDeveloperName}}'+LIMIT+1\",\n            \"referenceId\": \"paymentGatewayProvider\"\n        },\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id+FROM+PaymentGateway+WHERE+PaymentGatewayProviderId+=+'@{paymentGatewayProvider.records[0].Id}'+AND+MerchantCredentialId+=+'@{namedCredential.records[0].Id}'+AND+PaymentGatewayName+=+'{{paymentGatewayName}}'+AND+Status+='Active'+LIMIT+1\",\n            \"referenceId\": \"paymentGateway\"\n        }\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{_instanceUrl}}/services/data/v{{version}}/composite",
+							"host": [
+								"{{_instanceUrl}}"
+							],
+							"path": [
+								"services",
+								"data",
+								"v{{version}}",
+								"composite"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "WebStore External Services",
+			"item": [
+				{
+					"name": "Inventory",
+					"item": [
+						{
+							"name": "Register Inventory External Service",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test('Validate result and save collection variables', () => {",
+											"    let data = pm.response.json();",
+											"    const extService = data.compositeResponse.find((result) => result.referenceId === 'inventoryRegisteredExternalService');",
+											"    pm.expect(extService).to.exist;",
+											"    pm.expect(extService.httpStatusCode).to.eql(201);",
+											"    pm.expect(extService.body).to.exist;",
+											"    pm.expect(extService.body.id).to.exist;",
+											"    pm.expect(extService.body.id).to.be.a.string;",
+											"    pm.collectionVariables.set('_inventoryRegisteredExtSvcId', extService.body.id);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{_accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"allOrNone\": true,\n    \"compositeRequest\": [\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id+FROM+ApexClass+WHERE+Name+=+'{{extSvcApexClassNameInventory}}'+AND+Status+='Active'+LIMIT+1\",\n            \"referenceId\": \"inventoryApexClass\"\n        },\n        {\n            \"method\": \"POST\",\n            \"url\": \"/services/data/v{{version}}/sobjects/RegisteredExternalService\",\n            \"referenceId\": \"inventoryRegisteredExternalService\",\n            \"body\": {\n                \"ExternalServiceProviderId\": \"@{inventoryApexClass.records[0].Id}\",\n                \"ExternalServiceProviderType\": \"Inventory\",\n                \"DeveloperName\": \"{{extSvcDeveloperNameInventory}}\",\n                \"MasterLabel\": \"{{extSvcDeveloperNameInventory}}\"\n            }\n        }\n    ]\n}"
+								},
+								"url": {
+									"raw": "{{_instanceUrl}}/services/data/v{{version}}/composite",
+									"host": [
+										"{{_instanceUrl}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"composite"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Register Inventory Store Integrated Service",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 201', () => {",
+											"    pm.response.to.have.status(201);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test('Validate result and save collection variables', () => {",
+											"    let body = pm.response.json();",
+											"    pm.expect(body.id).to.exist;",
+											"    pm.expect(body.id).to.be.a.string;",
+											"    pm.expect(body.success).to.exist;",
+											"    pm.expect(body.success).to.eql(true);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{_accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"Integration\": \"Inventory__{{extSvcDeveloperNameInventory}}\",\n    \"StoreId\": \"{{_webStoreId}}\",\n    \"ServiceProviderType\": \"Inventory\"\n}"
+								},
+								"url": {
+									"raw": "{{_instanceUrl}}/services/data/v{{version}}/sobjects/StoreIntegratedService",
+									"host": [
+										"{{_instanceUrl}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"sobjects",
+										"StoreIntegratedService"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Inventory External Service",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"const validateResults = (refId) => {",
+											"    pm.test(`Validate ${refId}`, () => {",
+											"        let data = pm.response.json();",
+											"        const refResult = data.compositeResponse.find((result) => result.referenceId === refId);",
+											"        pm.expect(refResult).to.exist;",
+											"        pm.expect(refResult.body).to.exist;",
+											"        pm.expect(refResult.body.records).to.exist;",
+											"        pm.expect(refResult.body.records).to.be.an('array');",
+											"        pm.expect(refResult.body.records.length).to.eql(1);",
+											"        pm.expect(refResult.body.records[0].Id).to.exist;",
+											"        pm.expect(refResult.body.records[0].Id).to.be.a.string;",
+											"        pm.collectionVariables.set(`_${refId}Id`, refResult.body.records[0].Id);",
+											"    });",
+											"};",
+											"",
+											"validateResults('inventoryApexClass');",
+											"validateResults('inventoryRegisteredExternalService');",
+											"validateResults('inventoryStoreIntegratedService');"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{_accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"allOrNone\": true,\n    \"compositeRequest\": [\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,+Name,+Status,+ApiVersion+FROM+ApexClass+WHERE+Name+=+'{{extSvcApexClassNameInventory}}'\",\n            \"referenceId\": \"inventoryApexClass\"\n        },\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,+DeveloperName,+Language,+MasterLabel,+NamespacePrefix,+ExternalServiceProviderId,+ExternalServiceProviderType+FROM+RegisteredExternalService+WHERE+ExternalServiceProviderId+=+'@{inventoryApexClass.records[0].Id}'+AND+DeveloperName+=+'{{extSvcDeveloperNameInventory}}'+AND+ExternalServiceProviderType+=+'Inventory'\",\n            \"referenceId\": \"inventoryRegisteredExternalService\"\n        },\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,+StoreId,+Integration,+ServiceProviderType+FROM+StoreIntegratedService+WHERE+Integration+=+'Inventory__{{extSvcDeveloperNameInventory}}'+AND+ServiceProviderType='Inventory'+AND StoreId='{{_webStoreId}}'\",\n            \"referenceId\": \"inventoryStoreIntegratedService\"\n        }\n    ]\n}"
+								},
+								"url": {
+									"raw": "{{_instanceUrl}}/services/data/v{{version}}/composite",
+									"host": [
+										"{{_instanceUrl}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"composite"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Shipment",
+					"item": [
+						{
+							"name": "Register Shipment External Service",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test('Validate result and save collection variables', () => {",
+											"    let data = pm.response.json();",
+											"    const extService = data.compositeResponse.find((result) => result.referenceId === 'shipmentRegisteredExternalService');",
+											"    pm.expect(extService).to.exist;",
+											"    pm.expect(extService.httpStatusCode).to.eql(201);",
+											"    pm.expect(extService.body).to.exist;",
+											"    pm.expect(extService.body.id).to.exist;",
+											"    pm.expect(extService.body.id).to.be.a.string;",
+											"    pm.collectionVariables.set('_shipmentRegisteredExtSvcId', extService.body.id);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{_accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"allOrNone\": true,\n    \"compositeRequest\": [\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id+FROM+ApexClass+WHERE+Name+=+'{{extSvcApexClassNameShipment}}'+AND+Status+='Active'+LIMIT+1\",\n            \"referenceId\": \"shipmentApexClass\"\n        },\n        {\n            \"method\": \"POST\",\n            \"url\": \"/services/data/v{{version}}/sobjects/RegisteredExternalService\",\n            \"referenceId\": \"shipmentRegisteredExternalService\",\n            \"body\": {\n                \"ExternalServiceProviderId\": \"@{shipmentApexClass.records[0].Id}\",\n                \"ExternalServiceProviderType\": \"Shipment\",\n                \"DeveloperName\": \"{{extSvcDeveloperNameShipment}}\",\n                \"MasterLabel\": \"{{extSvcDeveloperNameShipment}}\"\n            }\n        }\n    ]\n}"
+								},
+								"url": {
+									"raw": "{{_instanceUrl}}/services/data/v{{version}}/composite",
+									"host": [
+										"{{_instanceUrl}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"composite"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Register Shipment Store Integrated Service",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 201', () => {",
+											"    pm.response.to.have.status(201);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test('Validate result and save collection variables', () => {",
+											"    let body = pm.response.json();",
+											"    pm.expect(body.id).to.exist;",
+											"    pm.expect(body.id).to.be.a.string;",
+											"    pm.expect(body.success).to.exist;",
+											"    pm.expect(body.success).to.eql(true);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{_accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"Integration\": \"Shipment__{{extSvcDeveloperNameShipment}}\",\n    \"StoreId\": \"{{_webStoreId}}\",\n    \"ServiceProviderType\": \"Shipment\"\n}"
+								},
+								"url": {
+									"raw": "{{_instanceUrl}}/services/data/v{{version}}/sobjects/StoreIntegratedService",
+									"host": [
+										"{{_instanceUrl}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"sobjects",
+										"StoreIntegratedService"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Shipment External Service",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"const validateResults = (refId) => {",
+											"    pm.test(`Validate ${refId}`, () => {",
+											"        let data = pm.response.json();",
+											"        const refResult = data.compositeResponse.find((result) => result.referenceId === refId);",
+											"        pm.expect(refResult).to.exist;",
+											"        pm.expect(refResult.body).to.exist;",
+											"        pm.expect(refResult.body.records).to.exist;",
+											"        pm.expect(refResult.body.records).to.be.an('array');",
+											"        pm.expect(refResult.body.records.length).to.eql(1);",
+											"        pm.expect(refResult.body.records[0].Id).to.exist;",
+											"        pm.expect(refResult.body.records[0].Id).to.be.a.string;",
+											"        pm.collectionVariables.set(`_${refId}Id`, refResult.body.records[0].Id);",
+											"    });",
+											"};",
+											"",
+											"validateResults('shipmentApexClass');",
+											"validateResults('shipmentRegisteredExternalService');",
+											"validateResults('shipmentStoreIntegratedService');"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{_accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"allOrNone\": true,\n    \"compositeRequest\": [\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,+Name,+Status,+ApiVersion+FROM+ApexClass+WHERE+Name+=+'{{extSvcApexClassNameShipment}}'\",\n            \"referenceId\": \"shipmentApexClass\"\n        },\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,+DeveloperName,+Language,+MasterLabel,+NamespacePrefix,+ExternalServiceProviderId,+ExternalServiceProviderType+FROM+RegisteredExternalService+WHERE+ExternalServiceProviderId+=+'@{shipmentApexClass.records[0].Id}'+AND+DeveloperName+=+'{{extSvcDeveloperNameShipment}}'+AND+ExternalServiceProviderType+=+'Shipment'\",\n            \"referenceId\": \"shipmentRegisteredExternalService\"\n        },\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,+StoreId,+Integration,+ServiceProviderType+FROM+StoreIntegratedService+WHERE+Integration+=+'Shipment__{{extSvcDeveloperNameShipment}}'+AND+ServiceProviderType='Shipment'+AND StoreId='{{_webStoreId}}'\",\n            \"referenceId\": \"shipmentStoreIntegratedService\"\n        }\n    ]\n}"
+								},
+								"url": {
+									"raw": "{{_instanceUrl}}/services/data/v{{version}}/composite",
+									"host": [
+										"{{_instanceUrl}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"composite"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Tax",
+					"item": [
+						{
+							"name": "Register Tax External Service",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test('Validate result and save collection variables', () => {",
+											"    let data = pm.response.json();",
+											"    const extService = data.compositeResponse.find((result) => result.referenceId === 'taxRegisteredExternalService');",
+											"    pm.expect(extService).to.exist;",
+											"    pm.expect(extService.httpStatusCode).to.eql(201);",
+											"    pm.expect(extService.body).to.exist;",
+											"    pm.expect(extService.body.id).to.exist;",
+											"    pm.expect(extService.body.id).to.be.a.string;",
+											"    pm.collectionVariables.set('_taxRegisteredExtSvcId', extService.body.id);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{_accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"allOrNone\": true,\n    \"compositeRequest\": [\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id+FROM+ApexClass+WHERE+Name+=+'{{extSvcApexClassNameTax}}'+AND+Status+='Active'+LIMIT+1\",\n            \"referenceId\": \"taxApexClass\"\n        },\n        {\n            \"method\": \"POST\",\n            \"url\": \"/services/data/v{{version}}/sobjects/RegisteredExternalService\",\n            \"referenceId\": \"taxRegisteredExternalService\",\n            \"body\": {\n                \"ExternalServiceProviderId\": \"@{taxApexClass.records[0].Id}\",\n                \"ExternalServiceProviderType\": \"Tax\",\n                \"DeveloperName\": \"{{extSvcDeveloperNameTax}}\",\n                \"MasterLabel\": \"{{extSvcDeveloperNameTax}}\"\n            }\n        }\n    ]\n}"
+								},
+								"url": {
+									"raw": "{{_instanceUrl}}/services/data/v{{version}}/composite",
+									"host": [
+										"{{_instanceUrl}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"composite"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Register Tax Store Integrated Service",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 201', () => {",
+											"    pm.response.to.have.status(201);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test('Validate result and save collection variables', () => {",
+											"    let body = pm.response.json();",
+											"    pm.expect(body.id).to.exist;",
+											"    pm.expect(body.id).to.be.a.string;",
+											"    pm.expect(body.success).to.exist;",
+											"    pm.expect(body.success).to.eql(true);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{_accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"Integration\": \"Tax__{{extSvcDeveloperNameTax}}\",\n    \"StoreId\": \"{{_webStoreId}}\",\n    \"ServiceProviderType\": \"Tax\"\n}"
+								},
+								"url": {
+									"raw": "{{_instanceUrl}}/services/data/v{{version}}/sobjects/StoreIntegratedService",
+									"host": [
+										"{{_instanceUrl}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"sobjects",
+										"StoreIntegratedService"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Tax External Service",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"const validateResults = (refId) => {",
+											"    pm.test(`Validate ${refId}`, () => {",
+											"        let data = pm.response.json();",
+											"        const refResult = data.compositeResponse.find((result) => result.referenceId === refId);",
+											"        pm.expect(refResult).to.exist;",
+											"        pm.expect(refResult.body).to.exist;",
+											"        pm.expect(refResult.body.records).to.exist;",
+											"        pm.expect(refResult.body.records).to.be.an('array');",
+											"        pm.expect(refResult.body.records.length).to.eql(1);",
+											"        pm.expect(refResult.body.records[0].Id).to.exist;",
+											"        pm.expect(refResult.body.records[0].Id).to.be.a.string;",
+											"        pm.collectionVariables.set(`_${refId}Id`, refResult.body.records[0].Id);",
+											"    });",
+											"};",
+											"",
+											"validateResults('taxApexClass');",
+											"validateResults('taxRegisteredExternalService');",
+											"validateResults('taxStoreIntegratedService');"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{_accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"allOrNone\": true,\n    \"compositeRequest\": [\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,+Name,+Status,+ApiVersion+FROM+ApexClass+WHERE+Name+=+'{{extSvcApexClassNameTax}}'\",\n            \"referenceId\": \"taxApexClass\"\n        },\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,+DeveloperName,+Language,+MasterLabel,+NamespacePrefix,+ExternalServiceProviderId,+ExternalServiceProviderType+FROM+RegisteredExternalService+WHERE+ExternalServiceProviderId+=+'@{taxApexClass.records[0].Id}'+AND+DeveloperName+=+'{{extSvcDeveloperNameTax}}'+AND+ExternalServiceProviderType+=+'Tax'\",\n            \"referenceId\": \"taxRegisteredExternalService\"\n        },\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,+StoreId,+Integration,+ServiceProviderType+FROM+StoreIntegratedService+WHERE+Integration+=+'Tax__{{extSvcDeveloperNameTax}}'+AND+ServiceProviderType='Tax'+AND StoreId='{{_webStoreId}}'\",\n            \"referenceId\": \"taxStoreIntegratedService\"\n        }\n    ]\n}"
+								},
+								"url": {
+									"raw": "{{_instanceUrl}}/services/data/v{{version}}/composite",
+									"host": [
+										"{{_instanceUrl}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"composite"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Price",
+					"item": [
+						{
+							"name": "Register Price External Service",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test('Validate result and save collection variables', () => {",
+											"    let data = pm.response.json();",
+											"    const extService = data.compositeResponse.find((result) => result.referenceId === 'priceRegisteredExternalService');",
+											"    pm.expect(extService).to.exist;",
+											"    pm.expect(extService.httpStatusCode).to.eql(201);",
+											"    pm.expect(extService.body).to.exist;",
+											"    pm.expect(extService.body.id).to.exist;",
+											"    pm.expect(extService.body.id).to.be.a.string;",
+											"    pm.collectionVariables.set('_priceRegisteredExtSvcId', extService.body.id);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{_accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"allOrNone\": true,\n    \"compositeRequest\": [\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id+FROM+ApexClass+WHERE+Name+=+'{{extSvcApexClassNamePrice}}'+AND+Status+='Active'+LIMIT+1\",\n            \"referenceId\": \"priceApexClass\"\n        },\n        {\n            \"method\": \"POST\",\n            \"url\": \"/services/data/v{{version}}/sobjects/RegisteredExternalService\",\n            \"referenceId\": \"priceRegisteredExternalService\",\n            \"body\": {\n                \"ExternalServiceProviderId\": \"@{priceApexClass.records[0].Id}\",\n                \"ExternalServiceProviderType\": \"Price\",\n                \"DeveloperName\": \"{{extSvcDeveloperNamePrice}}\",\n                \"MasterLabel\": \"{{extSvcDeveloperNamePrice}}\"\n            }\n        }\n    ]\n}"
+								},
+								"url": {
+									"raw": "{{_instanceUrl}}/services/data/v{{version}}/composite",
+									"host": [
+										"{{_instanceUrl}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"composite"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Register Price Store Integrated Service",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 201', () => {",
+											"    pm.response.to.have.status(201);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test('Validate result and save collection variables', () => {",
+											"    let body = pm.response.json();",
+											"    pm.expect(body.id).to.exist;",
+											"    pm.expect(body.id).to.be.a.string;",
+											"    pm.expect(body.success).to.exist;",
+											"    pm.expect(body.success).to.eql(true);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{_accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"Integration\": \"Price__{{extSvcDeveloperNamePrice}}\",\n    \"StoreId\": \"{{_webStoreId}}\",\n    \"ServiceProviderType\": \"Price\"\n}"
+								},
+								"url": {
+									"raw": "{{_instanceUrl}}/services/data/v{{version}}/sobjects/StoreIntegratedService",
+									"host": [
+										"{{_instanceUrl}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"sobjects",
+										"StoreIntegratedService"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Price External Service",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"const validateResults = (refId) => {",
+											"    pm.test(`Validate ${refId}`, () => {",
+											"        let data = pm.response.json();",
+											"        const refResult = data.compositeResponse.find((result) => result.referenceId === refId);",
+											"        pm.expect(refResult).to.exist;",
+											"        pm.expect(refResult.body).to.exist;",
+											"        pm.expect(refResult.body.records).to.exist;",
+											"        pm.expect(refResult.body.records).to.be.an('array');",
+											"        pm.expect(refResult.body.records.length).to.eql(1);",
+											"        pm.expect(refResult.body.records[0].Id).to.exist;",
+											"        pm.expect(refResult.body.records[0].Id).to.be.a.string;",
+											"        pm.collectionVariables.set(`_${refId}Id`, refResult.body.records[0].Id);",
+											"    });",
+											"};",
+											"",
+											"validateResults('priceApexClass');",
+											"validateResults('priceRegisteredExternalService');",
+											"validateResults('priceStoreIntegratedService');"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{_accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"allOrNone\": true,\n    \"compositeRequest\": [\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,+Name,+Status,+ApiVersion+FROM+ApexClass+WHERE+Name+=+'{{extSvcApexClassNamePrice}}'\",\n            \"referenceId\": \"priceApexClass\"\n        },\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,+DeveloperName,+Language,+MasterLabel,+NamespacePrefix,+ExternalServiceProviderId,+ExternalServiceProviderType+FROM+RegisteredExternalService+WHERE+ExternalServiceProviderId+=+'@{priceApexClass.records[0].Id}'+AND+DeveloperName+=+'{{extSvcDeveloperNamePrice}}'+AND+ExternalServiceProviderType+=+'Price'\",\n            \"referenceId\": \"priceRegisteredExternalService\"\n        },\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,+StoreId,+Integration,+ServiceProviderType+FROM+StoreIntegratedService+WHERE+Integration+=+'Price__{{extSvcDeveloperNamePrice}}'+AND+ServiceProviderType='Price'+AND StoreId='{{_webStoreId}}'\",\n            \"referenceId\": \"priceStoreIntegratedService\"\n        }\n    ]\n}"
+								},
+								"url": {
+									"raw": "{{_instanceUrl}}/services/data/v{{version}}/composite",
+									"host": [
+										"{{_instanceUrl}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"composite"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Payment",
+					"item": [
+						{
+							"name": "Register Payment External Service",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test('Validate paymentGateway', () => {",
+											"    let data = pm.response.json();",
+											"    const paymentGateway = data.compositeResponse.find((result) => result.referenceId === 'paymentGateway');",
+											"    pm.expect(paymentGateway).to.exist;",
+											"    pm.expect(paymentGateway.body.records).to.exist;",
+											"    pm.expect(paymentGateway.body.records).to.be.an('array');",
+											"    pm.expect(paymentGateway.body.records.length).to.eql(1);",
+											"    pm.expect(paymentGateway.body.records[0].Id).to.exist;",
+											"    pm.expect(paymentGateway.body.records[0].Id).to.be.a.string;",
+											"});",
+											"",
+											"pm.test('Validate paymentStoreIntegratedService', () => {",
+											"    let data = pm.response.json();",
+											"    const paymentIntSvc = data.compositeResponse.find((result) => result.referenceId === 'paymentStoreIntegratedService');",
+											"    pm.expect(paymentIntSvc).to.exist;",
+											"    pm.expect(paymentIntSvc.httpStatusCode).to.eql(201);",
+											"    pm.expect(paymentIntSvc.body.id).to.exist;",
+											"    pm.expect(paymentIntSvc.body.id).to.be.a.string;",
+											"    pm.expect(paymentIntSvc.body.success).to.exist;",
+											"    pm.expect(paymentIntSvc.body.success).to.eql(true);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{_accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"allOrNone\": true,\n    \"compositeRequest\": [\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id+FROM+PaymentGateway+WHERE+PaymentGatewayName+=+'{{paymentGatewayName}}'+AND+Status+='Active'+LIMIT+1\",\n            \"referenceId\": \"paymentGateway\"\n        },\n        {\n            \"method\": \"POST\",\n            \"url\": \"/services/data/v{{version}}/sobjects/StoreIntegratedService\",\n            \"referenceId\": \"paymentStoreIntegratedService\",\n            \"body\": {\n                \"Integration\": \"@{paymentGateway.records[0].Id}\",\n                \"StoreId\": \"{{_webStoreId}}\",\n                \"ServiceProviderType\": \"Payment\"\n            }\n        }\n    ]\n}"
+								},
+								"url": {
+									"raw": "{{_instanceUrl}}/services/data/v{{version}}/composite",
+									"host": [
+										"{{_instanceUrl}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"composite"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Payment External Service",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"const validateResults = (refId) => {",
+											"    pm.test(`Validate ${refId}`, () => {",
+											"        let data = pm.response.json();",
+											"        const refResult = data.compositeResponse.find((result) => result.referenceId === refId);",
+											"        pm.expect(refResult).to.exist;",
+											"        pm.expect(refResult.body).to.exist;",
+											"        pm.expect(refResult.body.records).to.exist;",
+											"        pm.expect(refResult.body.records).to.be.an('array');",
+											"        pm.expect(refResult.body.records.length).to.eql(1);",
+											"        pm.expect(refResult.body.records[0].Id).to.exist;",
+											"        pm.expect(refResult.body.records[0].Id).to.be.a.string;",
+											"        pm.collectionVariables.set(`_${refId}Id`, refResult.body.records[0].Id);",
+											"    });",
+											"};",
+											"",
+											"validateResults('apexClass');",
+											"validateResults('namedCredential');",
+											"validateResults('paymentGatewayProvider');",
+											"validateResults('paymentGateway');",
+											"validateResults('paymentStoreIntegratedService');"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{_accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"allOrNone\": true,\n    \"compositeRequest\": [\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,+Name,+Status,+ApiVersion+FROM+ApexClass+WHERE+Name+=+'{{paymentGatewayProviderApexClassName}}'+LIMIT+1\",\n            \"referenceId\": \"apexClass\"\n        },\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,+DeveloperName,+Endpoint+FROM+NamedCredential+WHERE+DeveloperName+=+'{{namedCredentialDeveloperName}}'+LIMIT+1\",\n            \"referenceId\": \"namedCredential\"\n        },\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,+DeveloperName,+MasterLabel,+ApexAdapterId,+IdempotencySupported,+Language+FROM+PaymentGatewayProvider+WHERE+ApexAdapterId+=+'@{apexClass.records[0].Id}'+AND+DeveloperName+=+'{{paymentGatewayProviderDeveloperName}}'+LIMIT+1\",\n            \"referenceId\": \"paymentGatewayProvider\"\n        },\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id+FROM+PaymentGateway+WHERE+PaymentGatewayProviderId+=+'@{paymentGatewayProvider.records[0].Id}'+AND+MerchantCredentialId+=+'@{namedCredential.records[0].Id}'+AND+PaymentGatewayName+=+'{{paymentGatewayName}}'+AND+Status+='Active'+LIMIT+1\",\n            \"referenceId\": \"paymentGateway\"\n        },\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,+StoreId,+Integration,+ServiceProviderType+FROM+StoreIntegratedService+WHERE+Integration+=+'@{paymentGateway.records[0].Id}'+AND+ServiceProviderType='Payment'+AND StoreId='{{_webStoreId}}'\",\n            \"referenceId\": \"paymentStoreIntegratedService\"\n        }\n    ]\n}"
+								},
+								"url": {
+									"raw": "{{_instanceUrl}}/services/data/v{{version}}/composite",
+									"host": [
+										"{{_instanceUrl}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"composite"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
 			"name": "Webstore Product Import",
 			"item": [
+				{
+					"name": "Get Composite Values",
+					"item": [
+						{
+							"name": "Get Composite Values",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"const validateResults = (refId) => {",
+											"    pm.test(`Validate and set collection variable: _${refId}Id`, () => {",
+											"        let data = pm.response.json();",
+											"        const refResult = data.compositeResponse.find((result) => result.referenceId === refId);",
+											"        pm.expect(refResult).to.exist;",
+											"        pm.expect(refResult.body).to.exist;",
+											"        pm.expect(refResult.body.records).to.exist;",
+											"        pm.expect(refResult.body.records).to.be.an('array');",
+											"        pm.expect(refResult.body.records.length).to.eql(1);",
+											"        pm.expect(refResult.body.records[0].Id).to.exist;",
+											"        pm.expect(refResult.body.records[0].Id).to.be.a.string;",
+											"        pm.collectionVariables.set(`_${refId}Id`, refResult.body.records[0].Id);",
+											"    });",
+											"};",
+											"",
+											"validateResults('productCatalog');",
+											"validateResults('cmsWorkspace');",
+											"validateResults('priceBookOriginal');",
+											"validateResults('priceBookSales');",
+											"validateResults('defaultEntitlementPolicy');"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{_accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"allOrNone\": true,\n    \"compositeRequest\": [\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,+Name,+ProductCatalogId,+SalesStoreId+FROM+WebStoreCatalog+WHERE+SalesStoreId+=+'{{_webStoreId}}'\",\n            \"referenceId\": \"productCatalog\"\n        },\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,+Name,+Description+FROM+ManagedContentSpace+WHERE+Name+LIKE+'%25{{webStoreName}}%25'+LIMIT+1\",\n            \"referenceId\": \"cmsWorkspace\"\n        },\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,+Name+FROM+Pricebook2+WHERE+Name+=+'{{priceBookOriginalName}}'+LIMIT+1\",\n            \"referenceId\": \"priceBookOriginal\"\n        },\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,+Name+FROM+Pricebook2+WHERE+Name+=+'{{priceBookSalesName}}'+LIMIT+1\",\n            \"referenceId\": \"priceBookSales\"\n        },\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,+Name+FROM+CommerceEntitlementPolicy+WHERE+Name+LIKE+'%25{{webStoreName}}%25'+LIMIT+1\",\n            \"referenceId\": \"defaultEntitlementPolicy\"\n        }\n    ]\n}"
+								},
+								"url": {
+									"raw": "{{_instanceUrl}}/services/data/v{{version}}/composite",
+									"host": [
+										"{{_instanceUrl}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"composite"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
 				{
 					"name": "Upload CSV",
 					"item": [
@@ -462,507 +1840,147 @@
 					]
 				},
 				{
-					"name": "Retrieve WebStoreCatalog",
-					"event": [
+					"name": "Import Products",
+					"item": [
 						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test('Status code is 200', () => {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test('Response is valid and has a JSON body', () => {",
-									"     pm.response.to.be.success;",
-									"     pm.response.to.be.withBody;",
-									"     pm.response.to.be.json;",
-									"});",
-									"",
-									"pm.test('Validate the response and save collection variables', () => {",
-									"    const data = pm.response.json();",
-									"    pm.expect(data.records).to.exist;",
-									"    pm.expect(data.records).to.be.an('array');",
-									"    pm.expect(data.records.length).to.eql(1);",
-									"    const webStoreCatalog = data.records[0];",
-									"    pm.expect(webStoreCatalog.ProductCatalogId).to.exist;",
-									"    pm.expect(webStoreCatalog.ProductCatalogId).to.be.a.string;",
-									"    pm.collectionVariables.set('_productCatalogId', webStoreCatalog.ProductCatalogId);",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
+							"name": "Import Product CSV",
+							"event": [
 								{
-									"key": "token",
-									"value": "{{_accessToken}}",
-									"type": "string"
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 201', () => {",
+											"    pm.response.to.have.status(201);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test('Validate the response', () => {",
+											"    const data = pm.response.json();",
+											"    pm.expect(data.status).to.exist;",
+											"    pm.expect(data.status).to.be.a.string;",
+											"    pm.expect(data.status).to.eql(\"Complete\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
 								}
-							]
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{_accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"importConfiguration\": {\n        \"importSource\": {\n            \"contentVersionId\": \"{{_contentDocumentId}}\"\n        },\n        \"importSettings\": {\n            \"category\": {\n                \"productCatalogId\": \"{{_productCatalogId}}\"\n            },\n            \"media\": {\n                \"cmsWorkspaceId\": \"{{_cmsWorkspaceId}}\"\n            },\n            \"price\": {\n                \"pricebookAliasToIdMapping\": {\n                    \"original\": \"{{_priceBookOriginalId}}\",\n                    \"sales\": \"{{_priceBookSalesId}}\"\n                }\n            },\n            \"entitlement\": {\n                \"defaultEntitlementPolicyId\": \"{{_defaultEntitlementPolicyId}}\"\n            }\n        }\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/management/webstores/{{_webStoreId}}/product-import",
+									"host": [
+										"{{_instanceUrl}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"commerce",
+										"management",
+										"webstores",
+										"{{_webStoreId}}",
+										"product-import"
+									]
+								}
+							},
+							"response": []
 						},
-						"method": "GET",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{_instanceUrl}}/services/data/v{{version}}/query/?q=SELECT+Id,+Name,+ProductCatalogId,+SalesStoreId+FROM+WebStoreCatalog+WHERE+SalesStoreId+=+'{{_webStoreId}}'",
-							"host": [
-								"{{_instanceUrl}}"
-							],
-							"path": [
-								"services",
-								"data",
-								"v{{version}}",
-								"query",
-								""
-							],
-							"query": [
-								{
-									"key": "q",
-									"value": "SELECT+Id,+Name,+ProductCatalogId,+SalesStoreId+FROM+WebStoreCatalog+WHERE+SalesStoreId+=+'{{_webStoreId}}'"
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Retrieve ManagedContentSpace",
-					"event": [
 						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test('Status code is 200', () => {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test('Response is valid and has a JSON body', () => {",
-									"     pm.response.to.be.success;",
-									"     pm.response.to.be.withBody;",
-									"     pm.response.to.be.json;",
-									"});",
-									"",
-									"pm.test('Validate the response and save collection variables', () => {",
-									"    const data = pm.response.json();",
-									"    pm.expect(data.records).to.exist;",
-									"    pm.expect(data.records).to.be.an('array');",
-									"    pm.expect(data.records.length).to.eql(1);",
-									"    const workspace = data.records[0];",
-									"    pm.expect(workspace.Id).to.exist;",
-									"    pm.expect(workspace.Id).to.be.a.string;",
-									"    pm.collectionVariables.set('_cmsWorkspaceId', workspace.Id);",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
+							"name": "Import Sample Products",
+							"event": [
 								{
-									"key": "token",
-									"value": "{{_accessToken}}",
-									"type": "string"
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 201', () => {",
+											"    pm.response.to.have.status(201);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test('Validate the response', () => {",
+											"    const data = pm.response.json();",
+											"    pm.expect(data.status).to.exist;",
+											"    pm.expect(data.status).to.be.a.string;",
+											"    pm.expect(data.status).to.eql(\"Complete\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
 								}
-							]
-						},
-						"method": "GET",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{_instanceUrl}}/services/data/v{{version}}/query/?q=SELECT+Id,+Name,+Description+FROM+ManagedContentSpace+WHERE+Name+LIKE+'%25{{webStoreName}}%25'+LIMIT+1",
-							"host": [
-								"{{_instanceUrl}}"
 							],
-							"path": [
-								"services",
-								"data",
-								"v{{version}}",
-								"query",
-								""
-							],
-							"query": [
-								{
-									"key": "q",
-									"value": "SELECT+Id,+Name,+Description+FROM+ManagedContentSpace+WHERE+Name+LIKE+'%25{{webStoreName}}%25'+LIMIT+1"
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{_accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"importConfiguration\": {\n        \"importSource\": {\n            \"sampleData\": \"{{importSourceSampleData}}\"\n        },\n        \"importSettings\": {\n            \"category\": {\n                \"productCatalogId\": \"{{_productCatalogId}}\"\n            },\n            \"media\": {\n                \"cmsWorkspaceId\": \"{{_cmsWorkspaceId}}\"\n            },\n            \"price\": {\n                \"pricebookAliasToIdMapping\": {\n                    \"original\": \"{{_priceBookOriginalId}}\",\n                    \"sales\": \"{{_priceBookSalesId}}\"\n                }\n            },\n            \"entitlement\": {\n                \"defaultEntitlementPolicyId\": \"{{_defaultEntitlementPolicyId}}\"\n            }\n        }\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/management/webstores/{{_webStoreId}}/product-import",
+									"host": [
+										"{{_instanceUrl}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"commerce",
+										"management",
+										"webstores",
+										"{{_webStoreId}}",
+										"product-import"
+									]
 								}
-							]
+							},
+							"response": []
 						}
-					},
-					"response": []
-				},
-				{
-					"name": "Retrieve Original Pricebook",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test('Status code is 200', () => {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test('Response is valid and has a JSON body', () => {",
-									"     pm.response.to.be.success;",
-									"     pm.response.to.be.withBody;",
-									"     pm.response.to.be.json;",
-									"});",
-									"",
-									"pm.test('Validate the response and save collection variables', () => {",
-									"    const data = pm.response.json();",
-									"    pm.expect(data.records).to.exist;",
-									"    pm.expect(data.records).to.be.an('array');",
-									"    pm.expect(data.records.length).to.eql(1);",
-									"    const pricebook = data.records[0];",
-									"    pm.expect(pricebook.Id).to.exist;",
-									"    pm.expect(pricebook.Id).to.be.a.string;",
-									"    pm.collectionVariables.set('_priceBookOriginalId', pricebook.Id);",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{_accessToken}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "GET",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{_instanceUrl}}/services/data/v{{version}}/query/?q=SELECT+Id,+Name+FROM+Pricebook2+WHERE+Name+=+'{{priceBookOriginalName}}'+LIMIT+1",
-							"host": [
-								"{{_instanceUrl}}"
-							],
-							"path": [
-								"services",
-								"data",
-								"v{{version}}",
-								"query",
-								""
-							],
-							"query": [
-								{
-									"key": "q",
-									"value": "SELECT+Id,+Name+FROM+Pricebook2+WHERE+Name+=+'{{priceBookOriginalName}}'+LIMIT+1"
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Retrieve Sales Pricebook",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test('Status code is 200', () => {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test('Response is valid and has a JSON body', () => {",
-									"     pm.response.to.be.success;",
-									"     pm.response.to.be.withBody;",
-									"     pm.response.to.be.json;",
-									"});",
-									"",
-									"pm.test('Validate the response and save collection variables', () => {",
-									"    const data = pm.response.json();",
-									"    pm.expect(data.records).to.exist;",
-									"    pm.expect(data.records).to.be.an('array');",
-									"    pm.expect(data.records.length).to.eql(1);",
-									"    const pricebook = data.records[0];",
-									"    pm.expect(pricebook.Id).to.exist;",
-									"    pm.expect(pricebook.Id).to.be.a.string;",
-									"    pm.collectionVariables.set('_priceBookSalesId', pricebook.Id);",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{_accessToken}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "GET",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{_instanceUrl}}/services/data/v{{version}}/query/?q=SELECT+Id,+Name+FROM+Pricebook2+WHERE+Name+=+'{{priceBookSalesName}}'+LIMIT+1",
-							"host": [
-								"{{_instanceUrl}}"
-							],
-							"path": [
-								"services",
-								"data",
-								"v{{version}}",
-								"query",
-								""
-							],
-							"query": [
-								{
-									"key": "q",
-									"value": "SELECT+Id,+Name+FROM+Pricebook2+WHERE+Name+=+'{{priceBookSalesName}}'+LIMIT+1"
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Retrieve Entitlement Policy",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test('Status code is 200', () => {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test('Response is valid and has a JSON body', () => {",
-									"     pm.response.to.be.success;",
-									"     pm.response.to.be.withBody;",
-									"     pm.response.to.be.json;",
-									"});",
-									"",
-									"pm.test('Validate the response and save collection variables', () => {",
-									"    const data = pm.response.json();",
-									"    pm.expect(data.records).to.exist;",
-									"    pm.expect(data.records).to.be.an('array');",
-									"    pm.expect(data.records.length).to.eql(1);",
-									"    const entitlementPolicy = data.records[0];",
-									"    pm.expect(entitlementPolicy.Id).to.exist;",
-									"    pm.expect(entitlementPolicy.Id).to.be.a.string;",
-									"    pm.collectionVariables.set('_defaultEntitlementPolicyId', entitlementPolicy.Id);",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{_accessToken}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "GET",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{_instanceUrl}}/services/data/v{{version}}/query/?q=SELECT+Id,+Name+FROM+CommerceEntitlementPolicy+WHERE+Name+LIKE+'%25{{webStoreName}}%25'+LIMIT+1",
-							"host": [
-								"{{_instanceUrl}}"
-							],
-							"path": [
-								"services",
-								"data",
-								"v{{version}}",
-								"query",
-								""
-							],
-							"query": [
-								{
-									"key": "q",
-									"value": "SELECT+Id,+Name+FROM+CommerceEntitlementPolicy+WHERE+Name+LIKE+'%25{{webStoreName}}%25'+LIMIT+1"
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Import Product CSV",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test('Status code is 201', () => {",
-									"    pm.response.to.have.status(201);",
-									"});",
-									"",
-									"pm.test('Response is valid and has a JSON body', () => {",
-									"     pm.response.to.be.success;",
-									"     pm.response.to.be.withBody;",
-									"     pm.response.to.be.json;",
-									"});",
-									"",
-									"pm.test('Validate the response', () => {",
-									"    const data = pm.response.json();",
-									"    pm.expect(data.status).to.exist;",
-									"    pm.expect(data.status).to.be.a.string;",
-									"    pm.expect(data.status).to.eql(\"Complete\");",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{_accessToken}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"importConfiguration\": {\n        \"importSource\": {\n            \"contentVersionId\": \"{{_contentDocumentId}}\"\n        },\n        \"importSettings\": {\n            \"category\": {\n                \"productCatalogId\": \"{{_productCatalogId}}\"\n            },\n            \"media\": {\n                \"cmsWorkspaceId\": \"{{_cmsWorkspaceId}}\"\n            },\n            \"price\": {\n                \"pricebookAliasToIdMapping\": {\n                    \"original\": \"{{_priceBookOriginalId}}\",\n                    \"sales\": \"{{_priceBookSalesId}}\"\n                }\n            },\n            \"entitlement\": {\n                \"defaultEntitlementPolicyId\": \"{{_defaultEntitlementPolicyId}}\"\n            }\n        }\n    }\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/management/webstores/{{_webStoreId}}/product-import",
-							"host": [
-								"{{_instanceUrl}}"
-							],
-							"path": [
-								"services",
-								"data",
-								"v{{version}}",
-								"commerce",
-								"management",
-								"webstores",
-								"{{_webStoreId}}",
-								"product-import"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Import Sample Products",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test('Status code is 201', () => {",
-									"    pm.response.to.have.status(201);",
-									"});",
-									"",
-									"pm.test('Response is valid and has a JSON body', () => {",
-									"     pm.response.to.be.success;",
-									"     pm.response.to.be.withBody;",
-									"     pm.response.to.be.json;",
-									"});",
-									"",
-									"pm.test('Validate the response', () => {",
-									"    const data = pm.response.json();",
-									"    pm.expect(data.status).to.exist;",
-									"    pm.expect(data.status).to.be.a.string;",
-									"    pm.expect(data.status).to.eql(\"Complete\");",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{_accessToken}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"importConfiguration\": {\n        \"importSource\": {\n            \"sampleData\": \"{{importSourceSampleData}}\"\n        },\n        \"importSettings\": {\n            \"category\": {\n                \"productCatalogId\": \"{{_productCatalogId}}\"\n            },\n            \"media\": {\n                \"cmsWorkspaceId\": \"{{_cmsWorkspaceId}}\"\n            },\n            \"price\": {\n                \"pricebookAliasToIdMapping\": {\n                    \"original\": \"{{_priceBookOriginalId}}\",\n                    \"sales\": \"{{_priceBookSalesId}}\"\n                }\n            },\n            \"entitlement\": {\n                \"defaultEntitlementPolicyId\": \"{{_defaultEntitlementPolicyId}}\"\n            }\n        }\n    }\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/management/webstores/{{_webStoreId}}/product-import",
-							"host": [
-								"{{_instanceUrl}}"
-							],
-							"path": [
-								"services",
-								"data",
-								"v{{version}}",
-								"commerce",
-								"management",
-								"webstores",
-								"{{_webStoreId}}",
-								"product-import"
-							]
-						}
-					},
-					"response": []
+					]
 				}
 			]
 		},
@@ -1101,6 +2119,66 @@
 								"data",
 								"v{{version}}",
 								"commerce",
+								"webstores",
+								"{{_webStoreId}}",
+								"products",
+								"{{productId1}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get OMS Product Details",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', () => {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response is valid and has a JSON body', () => {",
+									"     pm.response.to.be.success;",
+									"     pm.response.to.be.withBody;",
+									"     pm.response.to.be.json;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{_accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/order-management/webstores/{{_webStoreId}}/products/{{productId1}}",
+							"host": [
+								"{{_instanceUrl}}"
+							],
+							"path": [
+								"services",
+								"data",
+								"v{{version}}",
+								"commerce",
+								"order-management",
 								"webstores",
 								"{{_webStoreId}}",
 								"products",
@@ -3331,6 +4409,84 @@
 					"response": []
 				}
 			]
+		}
+	],
+	"variable": [
+		{
+			"key": "_accessToken",
+			"value": ""
+		},
+		{
+			"key": "_instanceUrl",
+			"value": ""
+		},
+		{
+			"key": "_userId",
+			"value": ""
+		},
+		{
+			"key": "_orgId",
+			"value": ""
+		},
+		{
+			"key": "_webStoreId",
+			"value": ""
+		},
+		{
+			"key": "_paymentGatewayId",
+			"value": ""
+		},
+		{
+			"key": "_paymentStoreIntegratedServiceId",
+			"value": ""
+		},
+		{
+			"key": "_paymentGatewayProviderId",
+			"value": ""
+		},
+		{
+			"key": "_apexClassId",
+			"value": ""
+		},
+		{
+			"key": "_namedCredentialId",
+			"value": ""
+		},
+		{
+			"key": "_priceApexClassId",
+			"value": ""
+		},
+		{
+			"key": "_priceRegisteredExternalServiceId",
+			"value": ""
+		},
+		{
+			"key": "_priceStoreIntegratedServiceId",
+			"value": ""
+		},
+		{
+			"key": "_productCatalogIdId",
+			"value": ""
+		},
+		{
+			"key": "_productCatalogId",
+			"value": ""
+		},
+		{
+			"key": "_cmsWorkspaceId",
+			"value": ""
+		},
+		{
+			"key": "_priceBookOriginalId",
+			"value": ""
+		},
+		{
+			"key": "_priceBookSalesId",
+			"value": ""
+		},
+		{
+			"key": "_defaultEntitlementPolicyId",
+			"value": ""
 		}
 	]
 }

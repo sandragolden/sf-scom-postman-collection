@@ -54,7 +54,40 @@ In order to generate it, please do the following steps:
 #### :hash: Webstore
 1. Query Webstore (required)
 
+#### :hash: Create Payment Gateway
+1. Create Payment Gateway Provider
+2. Create Payment Gateway
+3. Query Payment Gateway
+
+#### :hash: WebStore External Services
+##### :hash: Inventory
+1. Register Inventory External Service
+2. Register Inventory Store Integrated Service
+3. Get Inventory External Service
+
+##### :hash: Shipment
+1. Register Shipment External Service
+2. Register Shipment Store Integrated Service
+3. Get Shipment External Service
+
+##### :hash: Tax
+1. Register Tax External Service
+2. Register Tax Store Integrated Service
+3. Get Tax External Service
+
+##### :hash: Price
+1. Register Price External Service
+2. Register Price Store Integrated Service
+3. Get Price External Service
+
+##### :hash: Payment
+1. Register Payment External Service
+2. Get Payment External Service
+
 #### :hash: Webstore Product Import
+
+##### :hash: Get Composite Values
+1. Get Composite Values
 
 ##### :hash: Upload CSV
 1. base64 encode file
@@ -62,18 +95,14 @@ In order to generate it, please do the following steps:
 3. Retrieve Content Document by ID
 4. Retrieve Content Document by Title
 
-##### Product Import
-1. Retrieve WebStoreCatalog
-2. Retrieve ManagedContentSpace
-3. Retrieve Original Pricebook
-4. Retrieve Sales Pricebook
-5. Retrieve Entitlement Policy
-6. Import Product CSV
-7. Import Sample Products
+##### :hash: Import Products
+1. Import Product CSV
+2. Import Sample Products
 
 #### :hash: Webstore Products
 1. Get Products
 2. Get Product Details
+3. Get OMS Product Details
 
 #### :hash: Webstore Cart
 
