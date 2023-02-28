@@ -10,7 +10,7 @@
 			"name": "Auth Salesforce API",
 			"item": [
 				{
-					"name": "Authentication Salesforce API",
+					"name": "Auth Salesforce API via Connected App",
 					"event": [
 						{
 							"listen": "test",
@@ -37,7 +37,7 @@
 									"    pm.collectionVariables.set('_accessToken', data.access_token);",
 									"    pm.collectionVariables.set('_instanceUrl', data.instance_url);",
 									"    pm.collectionVariables.set('_userId', id.pop());",
-									"    pm.collectionVariables.set('_orgId', id.pop());",
+									"    pm.collectionVariables.set('orgId', id.pop());",
 									"});"
 								],
 								"type": "text/javascript"
@@ -93,9 +93,9 @@
 							]
 						},
 						"url": {
-							"raw": "{{authTokenUrl}}/services/oauth2/token",
+							"raw": "{{loginUrl}}/services/oauth2/token",
 							"host": [
-								"{{authTokenUrl}}"
+								"{{loginUrl}}"
 							],
 							"path": [
 								"services",
@@ -103,6 +103,158 @@
 								"token"
 							]
 						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login Admin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', () => {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Validate the access token is found in the body and save it to the variables', () => {",
+									"    const result = xml2Json(pm.response.text())['soapenv:Envelope']['soapenv:Body'].loginResponse.result;",
+									"    const url = result.serverUrl.split('/');",
+									"",
+									"    pm.expect(result.sessionId).to.exist;",
+									"    pm.expect(result.sessionId).to.be.a.string;",
+									"",
+									"    pm.collectionVariables.set('_accessToken', result.sessionId);",
+									"    pm.collectionVariables.set('_instanceUrl', url[0] + \"//\" + url[2]);",
+									"    pm.collectionVariables.set('_userId', result.userId);",
+									"    pm.collectionVariables.set('orgId', result.userInfo.organizationId);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "text/xml; charset=UTF-8"
+							},
+							{
+								"key": "SOAPAction",
+								"value": "login"
+							},
+							{
+								"key": "Accept",
+								"value": "text/xml"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n<env:Envelope xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"\n    xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n    xmlns:n1=\"urn:partner.soap.sforce.com\"\n    xmlns:env=\"http://schemas.xmlsoap.org/soap/envelope/\">\n    <env:Body>\n        <n1:login>\n            <n1:username><![CDATA[{{username}}]]></n1:username>\n            <n1:password><![CDATA[{{password}}]]></n1:password>\n        </n1:login>\n    </env:Body>\n</env:Envelope>"
+						},
+						"url": {
+							"raw": "{{loginUrl}}/services/Soap/u/{{version}}",
+							"host": [
+								"{{loginUrl}}"
+							],
+							"path": [
+								"services",
+								"Soap",
+								"u",
+								"{{version}}"
+							]
+						},
+						"description": "Logs in to the login server and starts a client session.\n\nMake sure to set the `url`, `username`, `password` and `secretToken` environment variables before sending this request.\nOn success, the request will automatically collect your authentication token for later use."
+					},
+					"response": []
+				},
+				{
+					"name": "Login Buyer",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', () => {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Validate the access token is found in the body and save it to the variables', () => {",
+									"    const result = xml2Json(pm.response.text())['soapenv:Envelope']['soapenv:Body'].loginResponse.result;",
+									"    const url = result.serverUrl.split('/');",
+									"",
+									"    pm.expect(result.sessionId).to.exist;",
+									"    pm.expect(result.sessionId).to.be.a.string;",
+									"",
+									"    pm.collectionVariables.set('_accessToken', result.sessionId);",
+									"    pm.collectionVariables.set('_instanceUrl', url[0] + \"//\" + url[2]);",
+									"    pm.collectionVariables.set('_userId', result.userId);",
+									"    pm.collectionVariables.set('orgId', result.userInfo.organizationId);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "text/xml; charset=UTF-8"
+							},
+							{
+								"key": "SOAPAction",
+								"value": "login"
+							},
+							{
+								"key": "Accept",
+								"value": "text/xml"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n<env:Envelope xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"\n    xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n    xmlns:n1=\"urn:partner.soap.sforce.com\"\n    xmlns:env=\"http://schemas.xmlsoap.org/soap/envelope/\">\n    <env:Header>\n        <!--\n        ensure API is enabled\n        Administration Setup > Manage Users > Profiles > Users Profile > Administrative Permissions > API Enabled\n        -->\n        <n1:LoginScopeHeader>\n            <n1:organizationId>{{orgId}}</n1:organizationId>\n        </n1:LoginScopeHeader>\n    </env:Header>\n    <env:Body>\n        <n1:login>\n            <n1:username><![CDATA[{{buyerUsername}}]]></n1:username>\n            <n1:password><![CDATA[{{buyerPassword}}]]></n1:password>\n        </n1:login>\n    </env:Body>\n</env:Envelope>"
+						},
+						"url": {
+							"raw": "{{loginUrl}}/services/Soap/u/{{version}}",
+							"host": [
+								"{{loginUrl}}"
+							],
+							"path": [
+								"services",
+								"Soap",
+								"u",
+								"{{version}}"
+							]
+						},
+						"description": "Logs in to the login server and starts a client session.\n\nMake sure to set the `url`, `username`, `password` and `secretToken` environment variables before sending this request.\nOn success, the request will automatically collect your authentication token for later use."
 					},
 					"response": []
 				}
@@ -235,7 +387,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"allOrNone\": true,\n    \"compositeRequest\": [\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id+FROM+ApexClass+WHERE+Name+=+'{{paymentGatewayProviderApexClassName}}'\",\n            \"referenceId\": \"apexClass\"\n        },\n        {\n            \"method\": \"POST\",\n            \"url\": \"/services/data/v{{version}}/sobjects/PaymentGatewayProvider\",\n            \"referenceId\": \"paymentGatewayProvider\",\n            \"body\": {\n                \"ApexAdapterId\": \"@{apexClass.records[0].Id}\",\n                \"DeveloperName\": \"{{paymentGatewayProviderDeveloperName}}\",\n                \"MasterLabel\": \"{{paymentGatewayProviderMasterLabel}}\",\n                \"Language\": \"en_US\",\n                \"IdempotencySupported\": \"Yes\"\n            }\n        }\n    ]\n}",
+							"raw": "{\n    \"allOrNone\": true,\n    \"compositeRequest\": [\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id+FROM+ApexClass+WHERE+Name+=+'{{paymentGatewayProviderApexClassName}}'\",\n            \"referenceId\": \"apexClass\"\n        },\n        {\n            \"method\": \"POST\",\n            \"url\": \"/services/data/v{{version}}/sobjects/PaymentGatewayProvider\",\n            \"referenceId\": \"paymentGatewayProvider\",\n            \"body\": {\n                \"ApexAdapterId\": \"@{apexClass.records[0].Id}\",\n                \"DeveloperName\": \"{{paymentGatewayProviderDeveloperName}}\",\n                \"MasterLabel\": \"{{paymentGatewayProviderDeveloperName}}\",\n                \"Language\": \"en_US\",\n                \"IdempotencySupported\": \"Yes\"\n            }\n        }\n    ]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -2653,7 +2805,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"name\": \"Test OOBO Cart\",\n    \"type\": \"Cart\",\n    \"effectiveAccountId\": \"{{effectiveAccountId}}\"\n}",
+									"raw": "{\n    \"name\": \"Test Headless Cart\",\n    \"type\": \"Cart\",\n    \"effectiveAccountId\": \"{{effectiveAccountId}}\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -3119,7 +3271,7 @@
 							"raw": "{\n    \"cartId\": \"{{_cartId}}\"\n}"
 						},
 						"url": {
-							"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/checkouts?effectiveAccountId={{effectiveAccountId}}",
+							"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/checkouts",
 							"host": [
 								"{{_instanceUrl}}"
 							],
@@ -3131,12 +3283,6 @@
 								"webstores",
 								"{{_webStoreId}}",
 								"checkouts"
-							],
-							"query": [
-								{
-									"key": "effectiveAccountId",
-									"value": "{{effectiveAccountId}}"
-								}
 							]
 						}
 					},
@@ -3281,6 +3427,68 @@
 							]
 						},
 						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/checkouts/{{_checkoutId}}",
+							"host": [
+								"{{_instanceUrl}}"
+							],
+							"path": [
+								"services",
+								"data",
+								"v{{version}}",
+								"commerce",
+								"webstores",
+								"{{_webStoreId}}",
+								"checkouts",
+								"{{_checkoutId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Cancel Checkout",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 204', () => {",
+									"    pm.response.to.have.status(204);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{_accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
 						"header": [
 							{
 								"key": "Content-Type",
@@ -3629,7 +3837,7 @@
 			"name": "Checkout - Happy Path",
 			"item": [
 				{
-					"name": "Authentication Salesforce API",
+					"name": "1. Login Admin",
 					"event": [
 						{
 							"listen": "test",
@@ -3639,24 +3847,17 @@
 									"    pm.response.to.have.status(200);",
 									"});",
 									"",
-									"pm.test('Response is valid and has a JSON body', () => {",
-									"     pm.response.to.be.ok;",
-									"     pm.response.to.be.withBody;",
-									"     pm.response.to.be.json;",
-									"});",
-									"",
 									"pm.test('Validate the access token is found in the body and save it to the variables', () => {",
-									"    const data = pm.response.json();",
-									"    pm.expect(data.token_type).to.exist;",
-									"    pm.expect(data.token_type).to.be.a.string;",
-									"    pm.expect(data.access_token).to.exist;",
-									"    pm.expect(data.access_token).to.be.a.string;",
-									"    const id = data.id.split('/');",
+									"    const result = xml2Json(pm.response.text())['soapenv:Envelope']['soapenv:Body'].loginResponse.result;",
+									"    const url = result.serverUrl.split('/');",
 									"",
-									"    pm.collectionVariables.set('_accessToken', data.access_token);",
-									"    pm.collectionVariables.set('_instanceUrl', data.instance_url);",
-									"    pm.collectionVariables.set('_userId', id.pop());",
-									"    pm.collectionVariables.set('_orgId', id.pop());",
+									"    pm.expect(result.sessionId).to.exist;",
+									"    pm.expect(result.sessionId).to.be.a.string;",
+									"",
+									"    pm.collectionVariables.set('_accessToken', result.sessionId);",
+									"    pm.collectionVariables.set('_instanceUrl', url[0] + \"//\" + url[2]);",
+									"    pm.collectionVariables.set('_userId', result.userId);",
+									"    pm.collectionVariables.set('orgId', result.userInfo.organizationId);",
 									"});"
 								],
 								"type": "text/javascript"
@@ -3673,59 +3874,46 @@
 						}
 					],
 					"request": {
+						"auth": {
+							"type": "noauth"
+						},
 						"method": "POST",
 						"header": [
 							{
 								"key": "Content-Type",
-								"value": "application/x-www-form-urlencoded"
+								"value": "text/xml; charset=UTF-8"
+							},
+							{
+								"key": "SOAPAction",
+								"value": "login"
+							},
+							{
+								"key": "Accept",
+								"value": "text/xml"
 							}
 						],
 						"body": {
-							"mode": "urlencoded",
-							"urlencoded": [
-								{
-									"key": "grant_type",
-									"value": "password",
-									"type": "text"
-								},
-								{
-									"key": "client_id",
-									"value": "{{clientId}}",
-									"type": "text"
-								},
-								{
-									"key": "client_secret",
-									"value": "{{clientSecret}}",
-									"type": "text"
-								},
-								{
-									"key": "username",
-									"value": "{{username}}",
-									"type": "text"
-								},
-								{
-									"key": "password",
-									"value": "{{password}}{{secretToken}}",
-									"type": "text"
-								}
-							]
+							"mode": "raw",
+							"raw": "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n<env:Envelope xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"\n    xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n    xmlns:n1=\"urn:partner.soap.sforce.com\"\n    xmlns:env=\"http://schemas.xmlsoap.org/soap/envelope/\">\n    <env:Body>\n        <n1:login>\n            <n1:username><![CDATA[{{username}}]]></n1:username>\n            <n1:password><![CDATA[{{password}}]]></n1:password>\n        </n1:login>\n    </env:Body>\n</env:Envelope>"
 						},
 						"url": {
-							"raw": "{{authTokenUrl}}/services/oauth2/token",
+							"raw": "{{loginUrl}}/services/Soap/u/{{version}}",
 							"host": [
-								"{{authTokenUrl}}"
+								"{{loginUrl}}"
 							],
 							"path": [
 								"services",
-								"oauth2",
-								"token"
+								"Soap",
+								"u",
+								"{{version}}"
 							]
-						}
+						},
+						"description": "Logs in to the login server and starts a client session.\n\nMake sure to set the `url`, `username`, `password` and `secretToken` environment variables before sending this request.\nOn success, the request will automatically collect your authentication token for later use."
 					},
 					"response": []
 				},
 				{
-					"name": "Get Webstore",
+					"name": "2. Get Webstore Id",
 					"event": [
 						{
 							"listen": "test",
@@ -3798,7 +3986,83 @@
 					"response": []
 				},
 				{
-					"name": "Delete Active Cart",
+					"name": "3. Login Buyer (optional, not needed for OOBO)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', () => {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Validate the access token is found in the body and save it to the variables', () => {",
+									"    const result = xml2Json(pm.response.text())['soapenv:Envelope']['soapenv:Body'].loginResponse.result;",
+									"    const url = result.serverUrl.split('/');",
+									"",
+									"    pm.expect(result.sessionId).to.exist;",
+									"    pm.expect(result.sessionId).to.be.a.string;",
+									"",
+									"    pm.collectionVariables.set('_accessToken', result.sessionId);",
+									"    pm.collectionVariables.set('_instanceUrl', url[0] + \"//\" + url[2]);",
+									"    pm.collectionVariables.set('_userId', result.userId);",
+									"    pm.collectionVariables.set('orgId', result.userInfo.organizationId);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "text/xml; charset=UTF-8"
+							},
+							{
+								"key": "SOAPAction",
+								"value": "login"
+							},
+							{
+								"key": "Accept",
+								"value": "text/xml"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n<env:Envelope xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"\n    xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n    xmlns:n1=\"urn:partner.soap.sforce.com\"\n    xmlns:env=\"http://schemas.xmlsoap.org/soap/envelope/\">\n    <env:Header>\n        <!--\n        ensure API is enabled\n        Administration Setup > Manage Users > Profiles > Users Profile > Administrative Permissions > API Enabled\n        -->\n        <n1:LoginScopeHeader>\n            <n1:organizationId>{{orgId}}</n1:organizationId>\n        </n1:LoginScopeHeader>\n    </env:Header>\n    <env:Body>\n        <n1:login>\n            <n1:username><![CDATA[{{buyerUsername}}]]></n1:username>\n            <n1:password><![CDATA[{{buyerPassword}}]]></n1:password>\n        </n1:login>\n    </env:Body>\n</env:Envelope>"
+						},
+						"url": {
+							"raw": "{{loginUrl}}/services/Soap/u/{{version}}",
+							"host": [
+								"{{loginUrl}}"
+							],
+							"path": [
+								"services",
+								"Soap",
+								"u",
+								"{{version}}"
+							]
+						},
+						"description": "Logs in to the login server and starts a client session.\n\nMake sure to set the `url`, `username`, `password` and `secretToken` environment variables before sending this request.\nOn success, the request will automatically collect your authentication token for later use."
+					},
+					"response": []
+				},
+				{
+					"name": "4. Delete Active Cart",
 					"event": [
 						{
 							"listen": "test",
@@ -3859,7 +4123,7 @@
 					"response": []
 				},
 				{
-					"name": "Create a Cart",
+					"name": "5. Create a Cart",
 					"event": [
 						{
 							"listen": "test",
@@ -3901,7 +4165,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"name\": \"Test OOBO Cart\",\n    \"type\": \"Cart\",\n    \"effectiveAccountId\": \"{{effectiveAccountId}}\"\n}",
+							"raw": "{\n    \"name\": \"Test Headless Cart\",\n    \"type\": \"Cart\",\n    \"effectiveAccountId\": \"{{effectiveAccountId}}\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -3927,7 +4191,7 @@
 					"response": []
 				},
 				{
-					"name": "Add Items to Cart",
+					"name": "6. Add Items to Cart",
 					"event": [
 						{
 							"listen": "test",
@@ -4014,7 +4278,7 @@
 					"response": []
 				},
 				{
-					"name": "Create Checkout",
+					"name": "7. Create Checkout",
 					"event": [
 						{
 							"listen": "test",
@@ -4065,7 +4329,7 @@
 							"raw": "{\n    \"cartId\": \"{{_cartId}}\"\n}"
 						},
 						"url": {
-							"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/checkouts?effectiveAccountId={{effectiveAccountId}}",
+							"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/checkouts",
 							"host": [
 								"{{_instanceUrl}}"
 							],
@@ -4077,19 +4341,13 @@
 								"webstores",
 								"{{_webStoreId}}",
 								"checkouts"
-							],
-							"query": [
-								{
-									"key": "effectiveAccountId",
-									"value": "{{effectiveAccountId}}"
-								}
 							]
 						}
 					},
 					"response": []
 				},
 				{
-					"name": "Patch Delivery Address",
+					"name": "8. Patch Delivery Address",
 					"event": [
 						{
 							"listen": "test",
@@ -4169,7 +4427,7 @@
 					"response": []
 				},
 				{
-					"name": "Create Payment Token",
+					"name": "9. Create Payment Token",
 					"event": [
 						{
 							"listen": "test",
@@ -4253,7 +4511,7 @@
 					"response": []
 				},
 				{
-					"name": "Authorize Payment",
+					"name": "10. Authorize Payment",
 					"event": [
 						{
 							"listen": "test",
@@ -4333,7 +4591,7 @@
 					"response": []
 				},
 				{
-					"name": "Cart to Order",
+					"name": "11. Cart to Order",
 					"event": [
 						{
 							"listen": "test",
@@ -4425,7 +4683,7 @@
 			"value": ""
 		},
 		{
-			"key": "_orgId",
+			"key": "orgId",
 			"value": ""
 		},
 		{
@@ -4433,59 +4691,39 @@
 			"value": ""
 		},
 		{
-			"key": "_paymentGatewayId",
+			"key": "_cartItemId",
 			"value": ""
 		},
 		{
-			"key": "_paymentStoreIntegratedServiceId",
+			"key": "_checkoutId",
 			"value": ""
 		},
 		{
-			"key": "_paymentGatewayProviderId",
+			"key": "_desiredDeliveryDate",
 			"value": ""
 		},
 		{
-			"key": "_apexClassId",
+			"key": "_expiryMonth",
 			"value": ""
 		},
 		{
-			"key": "_namedCredentialId",
+			"key": "_expiryYear",
 			"value": ""
 		},
 		{
-			"key": "_priceApexClassId",
+			"key": "_paymentToken",
 			"value": ""
 		},
 		{
-			"key": "_priceRegisteredExternalServiceId",
+			"key": "_orderReferenceNumber",
 			"value": ""
 		},
 		{
-			"key": "_priceStoreIntegratedServiceId",
+			"key": "_deliveryMethodId",
 			"value": ""
 		},
 		{
-			"key": "_productCatalogIdId",
-			"value": ""
-		},
-		{
-			"key": "_productCatalogId",
-			"value": ""
-		},
-		{
-			"key": "_cmsWorkspaceId",
-			"value": ""
-		},
-		{
-			"key": "_priceBookOriginalId",
-			"value": ""
-		},
-		{
-			"key": "_priceBookSalesId",
-			"value": ""
-		},
-		{
-			"key": "_defaultEntitlementPolicyId",
+			"key": "_cartId",
 			"value": ""
 		}
 	]

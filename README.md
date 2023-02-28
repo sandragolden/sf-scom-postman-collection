@@ -49,7 +49,9 @@ In order to generate it, please do the following steps:
 ## :asterisk: Endpoints Covered
 
 #### :hash: Auth Salesforce API
-1. Authentication Salesforce API (required)
+1. Auth Salesforce API via Connected App
+2. Login Admin
+3. Login Buyer
 
 #### :hash: Webstore
 1. Query Webstore (required)
@@ -133,22 +135,24 @@ In order to generate it, please do the following steps:
 1. Create Checkout
 2. Patch Delivery Address
 3. Get Checkout Status
-4. Patch Delivery Method
-5. Create Payment Token
-6. Authorize Payment
-7. Cart to Order
+4. Cancel Checkout
+5. Patch Delivery Method
+6. Create Payment Token
+7. Authorize Payment
+8. Cart to Order
 
 #### :hash: Checkout - Happy Path
-1. Authentication Salesforce API
-2. Get Webstore
-3. Delete Active Cart
-4. Create a Cart
-5. Add Items to Cart
-6. Create Checkout
-7. Patch Delivery Address
-8. Create Payment Token
-9. Authorize Payment
-10. Cart to Order
+1. Login Admin
+2. Get Webstore Id
+3. Login Buyer (optional, not needed for OOBO)
+4. Delete Active Cart
+5. Create a Cart
+6. Add Items to Cart
+7. Create Checkout
+8. Patch Delivery Address
+9. Create Payment Token
+10. Authorize Payment
+11. Cart to Order
 
 ## :rocket: How to?
 
