@@ -54,7 +54,7 @@ In order to generate it, please do the following steps:
 3. Login Buyer
 
 #### :hash: Webstore
-1. Query Webstore (required)
+1. Query Webstore Id (required)
 
 #### :hash: Create Payment Gateway
 1. Create Payment Gateway Provider
@@ -153,6 +153,18 @@ In order to generate it, please do the following steps:
 9. Create Payment Token
 10. Authorize Payment
 11. Cart to Order
+
+#### :new: Guest Cart and Checkout (using cookies, DTC)
+1. Query Site Id, URL Prefix, Set Site URL
+2. Create a Guest Cart
+3. Get Cart by ID
+4. Add Item to Cart
+5. Create Checkout
+6. Patch Contact Info
+7. Patch Delivery Address
+8. Create Payment Token
+9. Authorize Payment
+10. Cart to Order
 
 ## :rocket: How to?
 

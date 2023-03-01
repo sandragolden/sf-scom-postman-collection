@@ -264,7 +264,7 @@
 			"name": "Webstore",
 			"item": [
 				{
-					"name": "Query Webstore",
+					"name": "Query Webstore Id",
 					"event": [
 						{
 							"listen": "test",
@@ -2400,7 +2400,7 @@
 									}
 								],
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/query/?q=SELECT+Id,+Name,+WebStoreId+FROM+WebCart+WHERE+WebStoreId+=+'{{_webStoreId}}'+AND+AccountId+=+'{{effectiveAccountId}}'",
+									"raw": "{{_instanceUrl}}/services/data/v{{version}}/query/?q=SELECT+Id,+Name,+Status,+WebStoreId+FROM+WebCart+WHERE+WebStoreId+=+'{{_webStoreId}}'+AND+AccountId+=+'{{effectiveAccountId}}'",
 									"host": [
 										"{{_instanceUrl}}"
 									],
@@ -2414,7 +2414,7 @@
 									"query": [
 										{
 											"key": "q",
-											"value": "SELECT+Id,+Name,+WebStoreId+FROM+WebCart+WHERE+WebStoreId+=+'{{_webStoreId}}'+AND+AccountId+=+'{{effectiveAccountId}}'"
+											"value": "SELECT+Id,+Name,+Status,+WebStoreId+FROM+WebCart+WHERE+WebStoreId+=+'{{_webStoreId}}'+AND+AccountId+=+'{{effectiveAccountId}}'"
 										}
 									]
 								}
@@ -4667,6 +4667,846 @@
 					"response": []
 				}
 			]
+		},
+		{
+			"name": "Guest Cart and Checkout (using cookies, DTC)",
+			"item": [
+				{
+					"name": "1. Query Site Id, URL Prefix, Set Site URL",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', () => {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response is valid and has a JSON body', () => {",
+									"     pm.response.to.be.success;",
+									"     pm.response.to.be.withBody;",
+									"     pm.response.to.be.json;",
+									"});",
+									"",
+									"pm.test('Status code is 200', () => {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response is valid and has a JSON body', () => {",
+									"     pm.response.to.be.success;",
+									"     pm.response.to.be.withBody;",
+									"     pm.response.to.be.json;",
+									"});",
+									"",
+									"pm.test('Validate the response and saves the WebStore Id in the collection variables', () => {",
+									"    let data = pm.response.json();",
+									"    const webStore = data.compositeResponse.find((result) => result.referenceId === 'webStore');",
+									"    pm.expect(webStore).to.exist;",
+									"    pm.expect(webStore.body).to.exist;",
+									"    pm.expect(webStore.body.records).to.exist;",
+									"    pm.expect(webStore.body.records).to.be.an('array');",
+									"    pm.expect(webStore.body.records.length).to.eql(1);",
+									"    pm.expect(webStore.body.records[0].Id).to.exist;",
+									"    pm.expect(webStore.body.records[0].Id).to.be.a.string;",
+									"    pm.collectionVariables.set('_webStoreId', webStore.body.records[0].Id);",
+									"});",
+									"",
+									"pm.test('Validate the response and saves the site data in the collection variables', () => {",
+									"    let data = pm.response.json();",
+									"    const siteResult = data.compositeResponse.find((result) => result.referenceId === 'site');",
+									"",
+									"    pm.expect(siteResult).to.exist;",
+									"    pm.expect(siteResult.body).to.exist;",
+									"    pm.expect(siteResult.body.records).to.exist;",
+									"    pm.expect(siteResult.body.records).to.be.an('array');",
+									"    pm.expect(siteResult.body.records.length).to.eql(1);",
+									"    pm.expect(siteResult.body.records[0].Id).to.exist;",
+									"    pm.expect(siteResult.body.records[0].Id).to.be.a.string;",
+									"",
+									"    const site = siteResult.body.records[0];",
+									"",
+									"    // get first 15 digits of site Id, not 18",
+									"    pm.collectionVariables.set('_siteId', site.Id.substring(0, 15));",
+									"",
+									"",
+									"    const instanceUrl = pm.collectionVariables.get('_instanceUrl');",
+									"    const siteUrl = instanceUrl.replace('my.salesforce.com', 'my.site.com');",
+									"    const siteUrlPath = [];",
+									"    if (site.UrlPathPrefix) {",
+									"        siteUrlPath.push(site.UrlPathPrefix);",
+									"    }",
+									"    siteUrlPath.push('webruntime');",
+									"    siteUrlPath.push('api');",
+									"",
+									"    pm.collectionVariables.set('_siteUrl', `${siteUrl}/${siteUrlPath.join('/')}`);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{_accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"allOrNone\": true,\n    \"compositeRequest\": [\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id+FROM+WebStore+WHERE+Name+=+'{{webStoreName}}'+LIMIT+1\",\n            \"referenceId\": \"webStore\"\n        },\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,+Name,+UrlPathPrefix+FROM+Site+WHERE+Name+=+'{{webStoreName}}1'+LIMIT+1\",\n            \"referenceId\": \"site\"\n        }\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{_instanceUrl}}/services/data/v{{version}}/composite",
+							"host": [
+								"{{_instanceUrl}}"
+							],
+							"path": [
+								"services",
+								"data",
+								"v{{version}}",
+								"composite"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "2. Create a Guest Cart",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 201', () => {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test('Response is valid and has a JSON body', () => {",
+									"     pm.response.to.be.success;",
+									"     pm.response.to.be.withBody;",
+									"     pm.response.to.be.json;",
+									"});",
+									"",
+									"pm.test('Validate the response and save collection variables', () => {",
+									"    const data = pm.response.json();",
+									"    pm.expect(data.cartId).to.exist;",
+									"    pm.expect(data.cartId).to.be.a.string;",
+									"    pm.collectionVariables.set('_cartId', data.cartId);",
+									"});",
+									"",
+									"// get guest cart session Id cookie",
+									"const cookies = pm.response.headers.filter(header=>header.key.includes('Set-Cookie'));",
+									"for (let i=0; i < cookies.length; i++) {",
+									"    if (cookies[i].value.includes('GuestCartSessionId')) {",
+									"        var cookieName = cookies[i].value.split(';')[0].split('=')[0];",
+									"        var cookieValue = cookies[i].value.split(';')[0].split('=')[1];",
+									"        if (cookieName && cookieValue) {",
+									"            pm.collectionVariables.set('_guestCartSessionIdCookieName', cookieName);",
+									"            pm.collectionVariables.set('_guestCartSessionIdCookieValue', cookieValue);",
+									"            break;",
+									"        }",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Generates a valid UUID v4 as per RFC4122: https://www.ietf.org/rfc/rfc4122.txt",
+									"function uuidv4() {",
+									"  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {",
+									"    let r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);",
+									"    return v.toString(16);",
+									"  });",
+									"}",
+									"",
+									"pm.collectionVariables.set('_guestUUID', uuidv4());"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Cookie",
+								"value": "guest_uuid_essential_{{_siteId}}={{_guestUUID}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Test Guest Cart\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{_siteUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/carts",
+							"host": [
+								"{{_siteUrl}}"
+							],
+							"path": [
+								"services",
+								"data",
+								"v{{version}}",
+								"commerce",
+								"webstores",
+								"{{_webStoreId}}",
+								"carts"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "3. Get Cart by ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', () => {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response is valid and has a JSON body', () => {",
+									"     pm.response.to.be.success;",
+									"     pm.response.to.be.withBody;",
+									"     pm.response.to.be.json;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Cookie",
+								"value": "guest_uuid_essential_{{_siteId}}={{_guestUUID}}",
+								"type": "text"
+							},
+							{
+								"key": "Cookie",
+								"value": "{{_guestCartSessionIdCookieName}}={{_guestCartSessionIdCookieValue}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{_siteUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/carts/{{_cartId}}",
+							"host": [
+								"{{_siteUrl}}"
+							],
+							"path": [
+								"services",
+								"data",
+								"v{{version}}",
+								"commerce",
+								"webstores",
+								"{{_webStoreId}}",
+								"carts",
+								"{{_cartId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "4. Add Item to Cart",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 201', () => {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test('Response is valid and has a JSON body', () => {",
+									"     pm.response.to.be.success;",
+									"     pm.response.to.be.withBody;",
+									"     pm.response.to.be.json;",
+									"});",
+									"",
+									"pm.test('Validate the response and save collection variables', () => {",
+									"    const data = pm.response.json();",
+									"    pm.expect(data.cartItemId).to.exist;",
+									"    pm.expect(data.cartItemId).to.be.a.string;",
+									"    pm.collectionVariables.set('_cartItemId', data.cartItemId);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Cookie",
+								"value": "guest_uuid_essential_{{_siteId}}={{_guestUUID}}",
+								"type": "text"
+							},
+							{
+								"key": "Cookie",
+								"value": "{{_guestCartSessionIdCookieName}}={{_guestCartSessionIdCookieValue}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"productId\": \"{{productId1}}\",\n    \"quantity\": \"1\",\n    \"type\": \"Product\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{_siteUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/carts/{{_cartId}}/cart-items",
+							"host": [
+								"{{_siteUrl}}"
+							],
+							"path": [
+								"services",
+								"data",
+								"v{{version}}",
+								"commerce",
+								"webstores",
+								"{{_webStoreId}}",
+								"carts",
+								"{{_cartId}}",
+								"cart-items"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "5. Create Checkout",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 202', () => {",
+									"    pm.response.to.have.status(202);",
+									"});",
+									"",
+									"pm.test('Response is valid and has a JSON body', () => {",
+									"     pm.response.to.be.success;",
+									"     pm.response.to.be.withBody;",
+									"     pm.response.to.be.json;",
+									"});",
+									"",
+									"pm.test('Validate the response and save collection variables', () => {",
+									"    const data = pm.response.json();",
+									"    pm.expect(data.checkoutId).to.exist;",
+									"    pm.expect(data.checkoutId).to.be.a.string;",
+									"    pm.collectionVariables.set('_checkoutId', data.checkoutId);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Cookie",
+								"value": "guest_uuid_essential_{{_siteId}}={{_guestUUID}}",
+								"type": "text"
+							},
+							{
+								"key": "Cookie",
+								"value": "{{_guestCartSessionIdCookieName}}={{_guestCartSessionIdCookieValue}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"cartId\": \"{{_cartId}}\",\n    \"deliveryAddress\": \"default\"\n}"
+						},
+						"url": {
+							"raw": "{{_siteUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/checkouts",
+							"host": [
+								"{{_siteUrl}}"
+							],
+							"path": [
+								"services",
+								"data",
+								"v{{version}}",
+								"commerce",
+								"webstores",
+								"{{_webStoreId}}",
+								"checkouts"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "6. Patch Contact Info",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', () => {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response is valid and has a JSON body', () => {",
+									"     pm.response.to.be.success;",
+									"     pm.response.to.be.withBody;",
+									"     pm.response.to.be.json;",
+									"});",
+									"",
+									"pm.test('Validate the response and save collection variables', () => {",
+									"    const data = pm.response.json();",
+									"    pm.expect(data.checkoutId).to.exist;",
+									"    pm.expect(data.checkoutId).to.be.a.string;",
+									"    pm.collectionVariables.set('_checkoutId', data.checkoutId);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"let now = new Date();",
+									"pm.collectionVariables.set('_desiredDeliveryDate', now.toISOString());"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Cookie",
+								"value": "guest_uuid_essential_{{_siteId}}={{_guestUUID}}",
+								"type": "text"
+							},
+							{
+								"key": "Cookie",
+								"value": "{{_guestCartSessionIdCookieName}}={{_guestCartSessionIdCookieValue}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"contactInfo\": {\n        \"email\": \"{{contactInfoEmail}}\",\n        \"firstName\": \"{{contactInfoFirstName}}\",\n        \"lastName\": \"{{contactInfoLastName}}\",\n        \"phoneNumber\": \"{{contactInfoPhone}}\"\n    }\n}"
+						},
+						"url": {
+							"raw": "{{_siteUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/checkouts/{{_checkoutId}}",
+							"host": [
+								"{{_siteUrl}}"
+							],
+							"path": [
+								"services",
+								"data",
+								"v{{version}}",
+								"commerce",
+								"webstores",
+								"{{_webStoreId}}",
+								"checkouts",
+								"{{_checkoutId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "7. Patch Delivery Address",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 202', () => {",
+									"    pm.response.to.have.status(202);",
+									"});",
+									"",
+									"pm.test('Response is valid and has a JSON body', () => {",
+									"     pm.response.to.be.success;",
+									"     pm.response.to.be.withBody;",
+									"     pm.response.to.be.json;",
+									"});",
+									"",
+									"pm.test('Validate the response and save collection variables', () => {",
+									"    const data = pm.response.json();",
+									"    pm.expect(data.checkoutId).to.exist;",
+									"    pm.expect(data.checkoutId).to.be.a.string;",
+									"    pm.collectionVariables.set('_checkoutId', data.checkoutId);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"let now = new Date();",
+									"pm.collectionVariables.set('_desiredDeliveryDate', now.toISOString());"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Cookie",
+								"value": "guest_uuid_essential_{{_siteId}}={{_guestUUID}}",
+								"type": "text"
+							},
+							{
+								"key": "Cookie",
+								"value": "{{_guestCartSessionIdCookieName}}={{_guestCartSessionIdCookieValue}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"deliveryAddress\": {\n        \"name\": \"{{deliveryAddressFirstName}} {{deliveryAddressLastName}}\",\n        \"street\": \"{{deliveryAddressStreet}}\",\n        \"city\": \"{{deliveryAddressCity}}\",\n        \"region\": \"{{deliveryAddressRegion}}\",\n        \"postalCode\": \"{{deliveryAddressPostalCode}}\",\n        \"country\": \"{{deliveryAddressCountry}}\"\n    },\n    \"desiredDeliveryDate\": \"{{_desiredDeliveryDate}}\",\n    \"shippingInstructions\": \"{{shippingInstructions}}\"\n}"
+						},
+						"url": {
+							"raw": "{{_siteUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/checkouts/{{_checkoutId}}",
+							"host": [
+								"{{_siteUrl}}"
+							],
+							"path": [
+								"services",
+								"data",
+								"v{{version}}",
+								"commerce",
+								"webstores",
+								"{{_webStoreId}}",
+								"checkouts",
+								"{{_checkoutId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "8. Create Payment Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 201', () => {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test('Response is valid and has a JSON body', () => {",
+									"     pm.response.to.be.success;",
+									"     pm.response.to.be.withBody;",
+									"     pm.response.to.be.json;",
+									"});",
+									"",
+									"pm.test('Validate the response and save collection variables', () => {",
+									"    const data = pm.response.json();",
+									"    pm.expect(data.token).to.exist;",
+									"    pm.expect(data.token).to.be.a.string;",
+									"    pm.collectionVariables.set('_paymentToken', data.token);",
+									"});",
+									"",
+									"// wait 5 seconds before attempting auth payment",
+									"setTimeout(() => {}, 5000);"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"let now = new Date();",
+									"pm.collectionVariables.set('_expiryMonth', now.getMonth() + 4);",
+									"pm.collectionVariables.set('_expiryYear', now.getFullYear() + 5);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Cookie",
+								"value": "guest_uuid_essential_{{_siteId}}={{_guestUUID}}",
+								"type": "text"
+							},
+							{
+								"key": "Cookie",
+								"value": "{{_guestCartSessionIdCookieName}}={{_guestCartSessionIdCookieValue}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"cardPaymentMethod\": {\n        \"cardHolderName\": \"{{cardHolderName}}\",\n        \"cardNumber\": \"{{cardNumber}}\",\n        \"expiryMonth\": {{_expiryMonth}},\n        \"expiryYear\": {{_expiryYear}},\n        \"cvv\": {{cardCvv}},\n        \"cardType\": \"{{cardType}}\"\n    }\n}"
+						},
+						"url": {
+							"raw": "{{_siteUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/payments/token",
+							"host": [
+								"{{_siteUrl}}"
+							],
+							"path": [
+								"services",
+								"data",
+								"v{{version}}",
+								"commerce",
+								"webstores",
+								"{{_webStoreId}}",
+								"payments",
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "9. Authorize Payment",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 201', () => {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test('Response is valid and has a JSON body', () => {",
+									"     pm.response.to.be.success;",
+									"     pm.response.to.be.withBody;",
+									"     pm.response.to.be.json;",
+									"});",
+									"",
+									"pm.test('Validate the response and save collection variables', () => {",
+									"    const data = pm.response.json();",
+									"    pm.expect(data.salesforceResultCode).to.exist;",
+									"    pm.expect(data.salesforceResultCode).to.be.a.string;",
+									"    pm.expect(data.salesforceResultCode).to.eql(\"Success\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Cookie",
+								"value": "guest_uuid_essential_{{_siteId}}={{_guestUUID}}",
+								"type": "text"
+							},
+							{
+								"key": "Cookie",
+								"value": "{{_guestCartSessionIdCookieName}}={{_guestCartSessionIdCookieValue}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"paymentToken\": \"{{_paymentToken}}\",\n    \"requestType\": \"{{paymentRequestType}}\",\n    \"billingAddress\": {\n        \"name\": \"{{billingAddressFirstName}} {{billingAddressLastName}}\",\n        \"street\": \"{{billingAddressStreet}}\",\n        \"city\": \"{{billingAddressCity}}\",\n        \"region\": \"{{billingAddressRegion}}\",\n        \"postalCode\": \"{{billingAddressPostalCode}}\",\n        \"country\": \"{{billingAddressCountry}}\"\n    }\n}"
+						},
+						"url": {
+							"raw": "{{_siteUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/checkouts/{{_checkoutId}}/payments",
+							"host": [
+								"{{_siteUrl}}"
+							],
+							"path": [
+								"services",
+								"data",
+								"v{{version}}",
+								"commerce",
+								"webstores",
+								"{{_webStoreId}}",
+								"checkouts",
+								"{{_checkoutId}}",
+								"payments"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "10. Cart to Order",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 201', () => {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test('Response is valid and has a JSON body', () => {",
+									"     pm.response.to.be.success;",
+									"     pm.response.to.be.withBody;",
+									"     pm.response.to.be.json;",
+									"});",
+									"",
+									"pm.test('Validate the response and save collection variables', () => {",
+									"    const data = pm.response.json();",
+									"    pm.expect(data.orderReferenceNumber).to.exist;",
+									"    pm.expect(data.orderReferenceNumber).to.be.a.string;",
+									"    pm.collectionVariables.set('_orderReferenceNumber', data.orderReferenceNumber);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Cookie",
+								"value": "guest_uuid_essential_{{_siteId}}={{_guestUUID}}",
+								"type": "text"
+							},
+							{
+								"key": "Cookie",
+								"value": "{{_guestCartSessionIdCookieName}}={{_guestCartSessionIdCookieValue}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{_siteUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/checkouts/{{_checkoutId}}/orders",
+							"host": [
+								"{{_siteUrl}}"
+							],
+							"path": [
+								"services",
+								"data",
+								"v{{version}}",
+								"commerce",
+								"webstores",
+								"{{_webStoreId}}",
+								"checkouts",
+								"{{_checkoutId}}",
+								"orders"
+							]
+						}
+					},
+					"response": []
+				}
+			]
 		}
 	],
 	"variable": [
@@ -4688,6 +5528,30 @@
 		},
 		{
 			"key": "_webStoreId",
+			"value": ""
+		},
+		{
+			"key": "_siteId",
+			"value": ""
+		},
+		{
+			"key": "_siteUrl",
+			"value": ""
+		},
+		{
+			"key": "_guestUUID",
+			"value": ""
+		},
+		{
+			"key": "_cartId",
+			"value": ""
+		},
+		{
+			"key": "_guestCartSessionIdCookieName",
+			"value": ""
+		},
+		{
+			"key": "_guestCartSessionIdCookieValue",
 			"value": ""
 		},
 		{
@@ -4716,14 +5580,6 @@
 		},
 		{
 			"key": "_orderReferenceNumber",
-			"value": ""
-		},
-		{
-			"key": "_deliveryMethodId",
-			"value": ""
-		},
-		{
-			"key": "_cartId",
 			"value": ""
 		}
 	]
