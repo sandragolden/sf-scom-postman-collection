@@ -48,100 +48,104 @@ In order to generate it, please do the following steps:
 
 ## :asterisk: Endpoints Covered
 
-#### :hash: Auth Salesforce API
+#### :card_index_dividers: Clear Collection Variables
+1. Clear Collection Variables
+
+#### :key: Auth Salesforce API
 1. Auth Salesforce API via Connected App
 2. Login Admin
 3. Login Buyer
 
-#### :hash: Webstore
-1. Query Webstore Id (required)
+#### :key: Set Webstore Id
+1. Query Webstore Id
 
-#### :hash: Create Payment Gateway
+#### :card_index_dividers: Create Payment Gateway
 1. Create Payment Gateway Provider
 2. Create Payment Gateway
 3. Query Payment Gateway
 
-#### :hash: WebStore External Services
-##### :hash: Inventory
+#### :card_index_dividers: WebStore External Services
+##### :card_index_dividers: Inventory
 1. Register Inventory External Service
 2. Register Inventory Store Integrated Service
 3. Get Inventory External Service
 
-##### :hash: Shipment
+##### :card_index_dividers: Shipment
 1. Register Shipment External Service
 2. Register Shipment Store Integrated Service
 3. Get Shipment External Service
 
-##### :hash: Tax
+##### :card_index_dividers: Tax
 1. Register Tax External Service
 2. Register Tax Store Integrated Service
 3. Get Tax External Service
 
-##### :hash: Price
+##### :card_index_dividers: Price
 1. Register Price External Service
 2. Register Price Store Integrated Service
 3. Get Price External Service
 
-##### :hash: Payment
+##### :card_index_dividers: Payment
 1. Register Payment External Service
 2. Get Payment External Service
 
-#### :hash: Webstore Product Import
+#### :new: :card_index_dividers: Webstore Context
+1. Get App Context
+2. Get Session Context
 
-##### :hash: Get Composite Values
+#### :card_index_dividers: Webstore Product Import
+
+##### :key: Get Composite Values
 1. Get Composite Values
 
-##### :hash: Upload CSV
+##### :card_index_dividers: Upload CSV
 1. base64 encode file
 2. Upload Content
 3. Retrieve Content Document by ID
 4. Retrieve Content Document by Title
 
-##### :hash: Import Products
+##### :card_index_dividers: Import Products
 1. Import Product CSV
 2. Import Sample Products
 
-#### :hash: Webstore Products
+#### :card_index_dividers: Webstore Products
 1. Get Products
 2. Get Product Details
-3. Get OMS Product Details
 
-#### :hash: Webstore Cart
+#### :new: :card_index_dividers: Webstore Product Prices
+1. Get Product Pricing
+2. Get Multiple Products Pricing
 
-##### :hash: Query Carts
+#### :card_index_dividers: OMS Products
+1. Get Product Details
+
+#### :card_index_dividers: Webstore Cart
+
+##### :card_index_dividers: Query Carts
 1. Query Carts by AccountId
 2. Query Carts by WebStoreId
 
-##### :hash: Get Cart
+##### :card_index_dividers: Get Cart
 1. Get Active Cart
 2. Get Cart by ID
 3. Query Carts
 
-##### :hash: Delete Cart
+##### :card_index_dividers: Delete Cart
 1. Delete Active Cart
 2. Delete Cart by ID
 
-##### :hash: Create Cart
+##### :card_index_dividers: Create Cart
 1. Create a Cart
 
-##### :hash: Cart Items
+##### :card_index_dividers: Cart Items
 1. Add Item to Cart
 2. Add Items to Cart (Batch)
 3. Get Cart Items
 4. Delete Cart Item
 5. Patch Cart Item (**_not yet supported for B2CE_**)
 
-#### :hash: Webstore Checkout
-1. Create Checkout
-2. Patch Delivery Address
-3. Get Checkout Status
-4. Cancel Checkout
-5. Patch Delivery Method
-6. Create Payment Token
-7. Authorize Payment
-8. Cart to Order
-
-#### :hash: Checkout - Happy Path
+#### :card_index_dividers: Webstore Checkout
+##### :card_index_dividers: Checkout - Happy Path
 1. Login Admin
 2. Get Webstore Id
 3. Login Buyer (optional, not needed for OOBO)
@@ -154,17 +158,55 @@ In order to generate it, please do the following steps:
 10. Authorize Payment
 11. Cart to Order
 
-#### :new: Guest Cart and Checkout (using cookies, DTC)
-1. Query Site Id, URL Prefix, Set Site URL
-2. Create a Guest Cart
-3. Get Cart by ID
-4. Add Item to Cart
-5. Create Checkout
-6. Patch Contact Info
-7. Patch Delivery Address
-8. Create Payment Token
-9. Authorize Payment
-10. Cart to Order
+##### :heavy_dollar_sign:
+1. Create Checkout
+2. Patch Delivery Address
+3. Get Checkout Status
+4. Cancel Checkout
+5. Patch Delivery Method
+6. Create Payment Token
+7. Authorize Payment
+8. Cart to Order
+
+##### :card_index_dividers: :new: Guest Cart and Checkout (using cookies, DTC)
+1. Login Admin
+2. :key: Query Site Id, URL Prefix, Set Site URL
+3. :key: Set Collection Variables
+4. Get Session Context
+5. Create a Guest Cart
+6. Get Cart by ID
+7. Add Item to Cart
+8. Create Checkout
+9. Patch Contact Info
+10. Patch Delivery Address
+11. Create Payment Token
+12. Authorize Payment
+13. Cart to Order
+
+#### :new: :card_index_dividers: Search Settings
+
+##### :card_index_dividers: Searchable Fields
+1. Get Searchable Fields
+2. Update Searchable Fields
+
+##### :card_index_dividers: Search Filters
+1. Get Search Filters
+2. Update Search Filters
+
+##### :card_index_dividers: Search Indexes
+1. Get Search Indexes
+2. Create Search Index
+3. Get Search Index
+4. Get Search Index Logs
+
+##### :card_index_dividers: Product Search Settings
+1. Get Product Search Settings
+2. Update Product Search Settings
+
+##### :card_index_dividers: Sorting Rules
+1. Get Sorting Rules
+2. :key: Get Custom Field Id
+3. Update Sorting Rules
 
 ## :rocket: How to?
 
