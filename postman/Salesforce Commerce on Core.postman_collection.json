@@ -7,6 +7,41 @@
 	},
 	"item": [
 		{
+			"name": "Clear Collection Variables",
+			"item": [
+				{
+					"name": "Clear Collection Variables",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Clean up the variables",
+									"pm.collectionVariables.clear();"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "postman-echo.com/get",
+							"host": [
+								"postman-echo",
+								"com"
+							],
+							"path": [
+								"get"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
 			"name": "Auth Salesforce API",
 			"item": [
 				{
@@ -1628,6 +1663,133 @@
 							"response": []
 						}
 					]
+				}
+			]
+		},
+		{
+			"name": "Webstore Context",
+			"item": [
+				{
+					"name": "Get App Context",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', () => {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response is valid and has a JSON body', () => {",
+									"     pm.response.to.be.success;",
+									"     pm.response.to.be.withBody;",
+									"     pm.response.to.be.json;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{_accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/application-context",
+							"host": [
+								"{{_instanceUrl}}"
+							],
+							"path": [
+								"services",
+								"data",
+								"v{{version}}",
+								"commerce",
+								"webstores",
+								"{{_webStoreId}}",
+								"application-context"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Session Context",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', () => {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response is valid and has a JSON body', () => {",
+									"     pm.response.to.be.success;",
+									"     pm.response.to.be.withBody;",
+									"     pm.response.to.be.json;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{_accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/session-context",
+							"host": [
+								"{{_instanceUrl}}"
+							],
+							"path": [
+								"services",
+								"data",
+								"v{{version}}",
+								"commerce",
+								"webstores",
+								"{{_webStoreId}}",
+								"session-context"
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		},
@@ -5705,71 +5867,23 @@
 	],
 	"variable": [
 		{
+			"key": "_accessToken",
+			"value": ""
+		},
+		{
 			"key": "_instanceUrl",
 			"value": ""
 		},
 		{
+			"key": "_userId",
+			"value": ""
+		},
+		{
+			"key": "orgId",
+			"value": ""
+		},
+		{
 			"key": "_webStoreId",
-			"value": ""
-		},
-		{
-			"key": "_siteId",
-			"value": ""
-		},
-		{
-			"key": "_siteUrl",
-			"value": ""
-		},
-		{
-			"key": "_guestUUID",
-			"value": ""
-		},
-		{
-			"key": "_cookie_guest_uuid_name",
-			"value": ""
-		},
-		{
-			"key": "_cookie_guest_uuid_value",
-			"value": ""
-		},
-		{
-			"key": "_cartId",
-			"value": ""
-		},
-		{
-			"key": "_cookie_guest_cartSessionId_name",
-			"value": ""
-		},
-		{
-			"key": "_cookie_guest_cartSessionId_value",
-			"value": ""
-		},
-		{
-			"key": "_cartItemId",
-			"value": ""
-		},
-		{
-			"key": "_checkoutId",
-			"value": ""
-		},
-		{
-			"key": "_desiredDeliveryDate",
-			"value": ""
-		},
-		{
-			"key": "_expiryMonth",
-			"value": ""
-		},
-		{
-			"key": "_expiryYear",
-			"value": ""
-		},
-		{
-			"key": "_paymentToken",
-			"value": ""
-		},
-		{
-			"key": "_orderReferenceNumber",
 			"value": ""
 		}
 	]
