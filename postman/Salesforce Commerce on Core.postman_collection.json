@@ -261,7 +261,7 @@
 			]
 		},
 		{
-			"name": "Webstore",
+			"name": "Set Webstore Id",
 			"item": [
 				{
 					"name": "Query Webstore Id",
@@ -4672,7 +4672,83 @@
 			"name": "Guest Cart and Checkout (using cookies, DTC)",
 			"item": [
 				{
-					"name": "1. Query Site Id, URL Prefix, Set Site URL",
+					"name": "1. Login Admin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', () => {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Validate the access token is found in the body and save it to the variables', () => {",
+									"    const result = xml2Json(pm.response.text())['soapenv:Envelope']['soapenv:Body'].loginResponse.result;",
+									"    const url = result.serverUrl.split('/');",
+									"",
+									"    pm.expect(result.sessionId).to.exist;",
+									"    pm.expect(result.sessionId).to.be.a.string;",
+									"",
+									"    pm.collectionVariables.set('_accessToken', result.sessionId);",
+									"    pm.collectionVariables.set('_instanceUrl', url[0] + \"//\" + url[2]);",
+									"    pm.collectionVariables.set('_userId', result.userId);",
+									"    pm.collectionVariables.set('orgId', result.userInfo.organizationId);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "text/xml; charset=UTF-8"
+							},
+							{
+								"key": "SOAPAction",
+								"value": "login"
+							},
+							{
+								"key": "Accept",
+								"value": "text/xml"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n<env:Envelope xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"\n    xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n    xmlns:n1=\"urn:partner.soap.sforce.com\"\n    xmlns:env=\"http://schemas.xmlsoap.org/soap/envelope/\">\n    <env:Body>\n        <n1:login>\n            <n1:username><![CDATA[{{username}}]]></n1:username>\n            <n1:password><![CDATA[{{password}}]]></n1:password>\n        </n1:login>\n    </env:Body>\n</env:Envelope>"
+						},
+						"url": {
+							"raw": "{{loginUrl}}/services/Soap/u/{{version}}",
+							"host": [
+								"{{loginUrl}}"
+							],
+							"path": [
+								"services",
+								"Soap",
+								"u",
+								"{{version}}"
+							]
+						},
+						"description": "Logs in to the login server and starts a client session.\n\nMake sure to set the `url`, `username`, `password` and `secretToken` environment variables before sending this request.\nOn success, the request will automatically collect your authentication token for later use."
+					},
+					"response": []
+				},
+				{
+					"name": "2. Query Site Id, URL Prefix, Set Site URL",
 					"event": [
 						{
 							"listen": "test",
@@ -4728,7 +4804,6 @@
 									"    // get first 15 digits of site Id, not 18",
 									"    pm.collectionVariables.set('_siteId', site.Id.substring(0, 15));",
 									"",
-									"",
 									"    const instanceUrl = pm.collectionVariables.get('_instanceUrl');",
 									"    const siteUrl = instanceUrl.replace('my.salesforce.com', 'my.site.com');",
 									"    const siteUrlPath = [];",
@@ -4766,7 +4841,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"allOrNone\": true,\n    \"compositeRequest\": [\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id+FROM+WebStore+WHERE+Name+=+'{{webStoreName}}'+LIMIT+1\",\n            \"referenceId\": \"webStore\"\n        },\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,+Name,+UrlPathPrefix+FROM+Site+WHERE+Name+=+'{{webStoreName}}1'+LIMIT+1\",\n            \"referenceId\": \"site\"\n        }\n    ]\n}"
+							"raw": "{\n    \"allOrNone\": true,\n    \"compositeRequest\": [\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id+FROM+WebStore+WHERE+Name+=+'{{webStoreName}}'+LIMIT+1\",\n            \"referenceId\": \"webStore\"\n        },\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,+Name,+UrlPathPrefix+FROM+Site+WHERE+MasterLabel+=+'{{webStoreName}}'+LIMIT+1\",\n            \"referenceId\": \"site\"\n        }\n    ]\n}"
 						},
 						"url": {
 							"raw": "{{_instanceUrl}}/services/data/v{{version}}/composite",
@@ -4784,7 +4859,134 @@
 					"response": []
 				},
 				{
-					"name": "2. Create a Guest Cart",
+					"name": "3. Set Collection Variables",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Generates a valid UUID v4 as per RFC4122: https://www.ietf.org/rfc/rfc4122.txt",
+									"function uuidv4() {",
+									"  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {",
+									"    let r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);",
+									"    return v.toString(16);",
+									"  });",
+									"}",
+									"",
+									"const instanceUrl = pm.collectionVariables.get('_instanceUrl');",
+									"const siteUrl = pm.collectionVariables.get('_siteUrl');",
+									"const siteId = pm.collectionVariables.get('_siteId');",
+									"const webStoreId = pm.collectionVariables.get('_webStoreId');",
+									"",
+									"// Clean up the variables",
+									"pm.collectionVariables.clear();",
+									"",
+									"// restore required variables",
+									"pm.collectionVariables.set('_instanceUrl', instanceUrl);",
+									"pm.collectionVariables.set('_siteUrl', siteUrl);",
+									"pm.collectionVariables.set('_siteId', siteId);",
+									"pm.collectionVariables.set('_webStoreId', webStoreId);",
+									"pm.collectionVariables.set('_guestUUID', uuidv4());",
+									"",
+									"pm.collectionVariables.set('_cookie_guest_uuid_name', `guest_uuid_essential_${siteId}`);",
+									"pm.collectionVariables.set('_cookie_guest_uuid_value', uuidv4());"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "postman-echo.com/get",
+							"host": [
+								"postman-echo",
+								"com"
+							],
+							"path": [
+								"get"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "4. Get Session Context",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', () => {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response is valid and has a JSON body', () => {",
+									"     pm.response.to.be.success;",
+									"     pm.response.to.be.withBody;",
+									"     pm.response.to.be.json;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Cookie",
+								"value": "{{_cookie_guest_uuid_name}}={{_cookie_guest_uuid_value}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{_siteUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/session-context",
+							"host": [
+								"{{_siteUrl}}"
+							],
+							"path": [
+								"services",
+								"data",
+								"v{{version}}",
+								"commerce",
+								"webstores",
+								"{{_webStoreId}}",
+								"session-context"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "5. Create a Guest Cart",
 					"event": [
 						{
 							"listen": "test",
@@ -4814,8 +5016,8 @@
 									"        var cookieName = cookies[i].value.split(';')[0].split('=')[0];",
 									"        var cookieValue = cookies[i].value.split(';')[0].split('=')[1];",
 									"        if (cookieName && cookieValue) {",
-									"            pm.collectionVariables.set('_guestCartSessionIdCookieName', cookieName);",
-									"            pm.collectionVariables.set('_guestCartSessionIdCookieValue', cookieValue);",
+									"            pm.collectionVariables.set('_cookie_guest_cartSessionId_name', cookieName);",
+									"            pm.collectionVariables.set('_cookie_guest_cartSessionId_value', cookieValue);",
 									"            break;",
 									"        }",
 									"    }",
@@ -4828,15 +5030,7 @@
 							"listen": "prerequest",
 							"script": {
 								"exec": [
-									"// Generates a valid UUID v4 as per RFC4122: https://www.ietf.org/rfc/rfc4122.txt",
-									"function uuidv4() {",
-									"  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {",
-									"    let r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);",
-									"    return v.toString(16);",
-									"  });",
-									"}",
-									"",
-									"pm.collectionVariables.set('_guestUUID', uuidv4());"
+									""
 								],
 								"type": "text/javascript"
 							}
@@ -4850,7 +5044,7 @@
 						"header": [
 							{
 								"key": "Cookie",
-								"value": "guest_uuid_essential_{{_siteId}}={{_guestUUID}}",
+								"value": "{{_cookie_guest_uuid_name}}={{_cookie_guest_uuid_value}}",
 								"type": "text"
 							}
 						],
@@ -4882,7 +5076,7 @@
 					"response": []
 				},
 				{
-					"name": "3. Get Cart by ID",
+					"name": "6. Get Cart by ID",
 					"event": [
 						{
 							"listen": "test",
@@ -4915,12 +5109,12 @@
 							},
 							{
 								"key": "Cookie",
-								"value": "guest_uuid_essential_{{_siteId}}={{_guestUUID}}",
+								"value": "{{_cookie_guest_uuid_name}}={{_cookie_guest_uuid_value}}",
 								"type": "text"
 							},
 							{
 								"key": "Cookie",
-								"value": "{{_guestCartSessionIdCookieName}}={{_guestCartSessionIdCookieValue}}",
+								"value": "{{_cookie_guest_cartSessionId_name}}={{_cookie_guest_cartSessionId_value}}",
 								"type": "text"
 							}
 						],
@@ -4944,7 +5138,7 @@
 					"response": []
 				},
 				{
-					"name": "4. Add Item to Cart",
+					"name": "7. Add Item to Cart",
 					"event": [
 						{
 							"listen": "test",
@@ -4984,12 +5178,12 @@
 							},
 							{
 								"key": "Cookie",
-								"value": "guest_uuid_essential_{{_siteId}}={{_guestUUID}}",
+								"value": "{{_cookie_guest_uuid_name}}={{_cookie_guest_uuid_value}}",
 								"type": "text"
 							},
 							{
 								"key": "Cookie",
-								"value": "{{_guestCartSessionIdCookieName}}={{_guestCartSessionIdCookieValue}}",
+								"value": "{{_cookie_guest_cartSessionId_name}}={{_cookie_guest_cartSessionId_value}}",
 								"type": "text"
 							}
 						],
@@ -5023,7 +5217,7 @@
 					"response": []
 				},
 				{
-					"name": "5. Create Checkout",
+					"name": "8. Create Checkout",
 					"event": [
 						{
 							"listen": "test",
@@ -5063,12 +5257,12 @@
 							},
 							{
 								"key": "Cookie",
-								"value": "guest_uuid_essential_{{_siteId}}={{_guestUUID}}",
+								"value": "{{_cookie_guest_uuid_name}}={{_cookie_guest_uuid_value}}",
 								"type": "text"
 							},
 							{
 								"key": "Cookie",
-								"value": "{{_guestCartSessionIdCookieName}}={{_guestCartSessionIdCookieValue}}",
+								"value": "{{_cookie_guest_cartSessionId_name}}={{_cookie_guest_cartSessionId_value}}",
 								"type": "text"
 							}
 						],
@@ -5095,7 +5289,7 @@
 					"response": []
 				},
 				{
-					"name": "6. Patch Contact Info",
+					"name": "9. Patch Contact Info",
 					"event": [
 						{
 							"listen": "test",
@@ -5145,12 +5339,12 @@
 							},
 							{
 								"key": "Cookie",
-								"value": "guest_uuid_essential_{{_siteId}}={{_guestUUID}}",
+								"value": "{{_cookie_guest_uuid_name}}={{_cookie_guest_uuid_value}}",
 								"type": "text"
 							},
 							{
 								"key": "Cookie",
-								"value": "{{_guestCartSessionIdCookieName}}={{_guestCartSessionIdCookieValue}}",
+								"value": "{{_cookie_guest_cartSessionId_name}}={{_cookie_guest_cartSessionId_value}}",
 								"type": "text"
 							}
 						],
@@ -5178,7 +5372,7 @@
 					"response": []
 				},
 				{
-					"name": "7. Patch Delivery Address",
+					"name": "10. Patch Delivery Address",
 					"event": [
 						{
 							"listen": "test",
@@ -5228,12 +5422,12 @@
 							},
 							{
 								"key": "Cookie",
-								"value": "guest_uuid_essential_{{_siteId}}={{_guestUUID}}",
+								"value": "{{_cookie_guest_uuid_name}}={{_cookie_guest_uuid_value}}",
 								"type": "text"
 							},
 							{
 								"key": "Cookie",
-								"value": "{{_guestCartSessionIdCookieName}}={{_guestCartSessionIdCookieValue}}",
+								"value": "{{_cookie_guest_cartSessionId_name}}={{_cookie_guest_cartSessionId_value}}",
 								"type": "text"
 							}
 						],
@@ -5261,7 +5455,7 @@
 					"response": []
 				},
 				{
-					"name": "8. Create Payment Token",
+					"name": "11. Create Payment Token",
 					"event": [
 						{
 							"listen": "test",
@@ -5312,12 +5506,12 @@
 							},
 							{
 								"key": "Cookie",
-								"value": "guest_uuid_essential_{{_siteId}}={{_guestUUID}}",
+								"value": "{{_cookie_guest_uuid_name}}={{_cookie_guest_uuid_value}}",
 								"type": "text"
 							},
 							{
 								"key": "Cookie",
-								"value": "{{_guestCartSessionIdCookieName}}={{_guestCartSessionIdCookieValue}}",
+								"value": "{{_cookie_guest_cartSessionId_name}}={{_cookie_guest_cartSessionId_value}}",
 								"type": "text"
 							}
 						],
@@ -5345,7 +5539,7 @@
 					"response": []
 				},
 				{
-					"name": "9. Authorize Payment",
+					"name": "12. Authorize Payment",
 					"event": [
 						{
 							"listen": "test",
@@ -5394,12 +5588,12 @@
 							},
 							{
 								"key": "Cookie",
-								"value": "guest_uuid_essential_{{_siteId}}={{_guestUUID}}",
+								"value": "{{_cookie_guest_uuid_name}}={{_cookie_guest_uuid_value}}",
 								"type": "text"
 							},
 							{
 								"key": "Cookie",
-								"value": "{{_guestCartSessionIdCookieName}}={{_guestCartSessionIdCookieValue}}",
+								"value": "{{_cookie_guest_cartSessionId_name}}={{_cookie_guest_cartSessionId_value}}",
 								"type": "text"
 							}
 						],
@@ -5428,7 +5622,7 @@
 					"response": []
 				},
 				{
-					"name": "10. Cart to Order",
+					"name": "13. Cart to Order",
 					"event": [
 						{
 							"listen": "test",
@@ -5477,12 +5671,12 @@
 							},
 							{
 								"key": "Cookie",
-								"value": "guest_uuid_essential_{{_siteId}}={{_guestUUID}}",
+								"value": "{{_cookie_guest_uuid_name}}={{_cookie_guest_uuid_value}}",
 								"type": "text"
 							},
 							{
 								"key": "Cookie",
-								"value": "{{_guestCartSessionIdCookieName}}={{_guestCartSessionIdCookieValue}}",
+								"value": "{{_cookie_guest_cartSessionId_name}}={{_cookie_guest_cartSessionId_value}}",
 								"type": "text"
 							}
 						],
@@ -5511,19 +5705,7 @@
 	],
 	"variable": [
 		{
-			"key": "_accessToken",
-			"value": ""
-		},
-		{
 			"key": "_instanceUrl",
-			"value": ""
-		},
-		{
-			"key": "_userId",
-			"value": ""
-		},
-		{
-			"key": "orgId",
 			"value": ""
 		},
 		{
@@ -5543,15 +5725,23 @@
 			"value": ""
 		},
 		{
+			"key": "_cookie_guest_uuid_name",
+			"value": ""
+		},
+		{
+			"key": "_cookie_guest_uuid_value",
+			"value": ""
+		},
+		{
 			"key": "_cartId",
 			"value": ""
 		},
 		{
-			"key": "_guestCartSessionIdCookieName",
+			"key": "_cookie_guest_cartSessionId_name",
 			"value": ""
 		},
 		{
-			"key": "_guestCartSessionIdCookieValue",
+			"key": "_cookie_guest_cartSessionId_value",
 			"value": ""
 		},
 		{
