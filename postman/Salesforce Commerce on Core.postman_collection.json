@@ -2441,9 +2441,14 @@
 						}
 					},
 					"response": []
-				},
+				}
+			]
+		},
+		{
+			"name": "OMS Products",
+			"item": [
 				{
-					"name": "Get OMS Product Details",
+					"name": "Get Product Details",
 					"event": [
 						{
 							"listen": "test",
