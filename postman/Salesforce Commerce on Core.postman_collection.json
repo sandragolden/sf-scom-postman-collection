@@ -6035,6 +6035,938 @@
 					"response": []
 				}
 			]
+		},
+		{
+			"name": "Search Settings",
+			"item": [
+				{
+					"name": "Searchable Fields",
+					"item": [
+						{
+							"name": "Get Searchable Fields",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{_accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/management/webstores/{{_webStoreId}}/search/attribute-settings/searchable-fields",
+									"host": [
+										"{{_instanceUrl}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"commerce",
+										"management",
+										"webstores",
+										"{{_webStoreId}}",
+										"search",
+										"attribute-settings",
+										"searchable-fields"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Update Searchable Fields",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{_accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PATCH",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"searchableAttributeSettings\": [\n        {\n            \"nameOrId\": \"Description\",\n            \"type\": \"Standard\",\n            \"isSearchable\": true\n        },\n        {\n            \"nameOrId\": \"Name\",\n            \"type\": \"Standard\",\n            \"isSearchable\": true\n        },\n        {\n            \"nameOrId\": \"StockKeepingUnit\",\n            \"type\": \"Standard\",\n            \"isSearchable\": true\n        },\n        {\n            \"nameOrId\": \"Name\",\n            \"type\": \"ProductCategory\",\n            \"isSearchable\": true\n        },\n        {\n            \"nameOrId\": \"Color__c\",\n            \"type\": \"ProductAttribute\",\n            \"isSearchable\": false\n        },\n        {\n            \"nameOrId\": \"Size__c\",\n            \"type\": \"ProductAttribute\",\n            \"isSearchable\": false\n        },\n        {\n            \"nameOrId\": \"Flavor__c\",\n            \"type\": \"ProductAttribute\",\n            \"isSearchable\": true\n        }\n    ]\n}"
+								},
+								"url": {
+									"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/management/webstores/{{_webStoreId}}/search/attribute-settings/searchable-fields",
+									"host": [
+										"{{_instanceUrl}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"commerce",
+										"management",
+										"webstores",
+										"{{_webStoreId}}",
+										"search",
+										"attribute-settings",
+										"searchable-fields"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Search Filters",
+					"item": [
+						{
+							"name": "Get Search Filters",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{_accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/management/webstores/{{_webStoreId}}/search/attribute-settings/facetable-fields",
+									"host": [
+										"{{_instanceUrl}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"commerce",
+										"management",
+										"webstores",
+										"{{_webStoreId}}",
+										"search",
+										"attribute-settings",
+										"facetable-fields"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Update Search Filters",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{_accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"facetableAttributeSettings\": [\n        {\n            \"displayRank\": 1,\n            \"displayType\": \"CategoryTree\",\n            \"nameOrId\": \"Id\",\n            \"type\": \"ProductCategory\"\n        },\n        {\n            \"displayRank\": 2,\n            \"displayType\": \"MultiSelect\",\n            \"nameOrId\": \"Family\",\n            \"type\": \"Standard\"\n        },\n        {\n            \"displayRank\": 3,\n            \"displayType\": \"MultiSelect\",\n            \"nameOrId\": \"QuantityUnitOfMeasure\",\n            \"type\": \"Standard\"\n        },\n        {\n            \"displayRank\": 4,\n            \"displayType\": \"MultiSelect\",\n            \"nameOrId\": \"Flavor__c\",\n            \"type\": \"ProductAttribute\"\n        }\n    ]\n}"
+								},
+								"url": {
+									"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/management/webstores/{{_webStoreId}}/search/attribute-settings/facetable-fields",
+									"host": [
+										"{{_instanceUrl}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"commerce",
+										"management",
+										"webstores",
+										"{{_webStoreId}}",
+										"search",
+										"attribute-settings",
+										"facetable-fields"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Search Indexes",
+					"item": [
+						{
+							"name": "Get Search Indexes",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{_accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/management/webstores/{{_webStoreId}}/search/indexes",
+									"host": [
+										"{{_instanceUrl}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"commerce",
+										"management",
+										"webstores",
+										"{{_webStoreId}}",
+										"search",
+										"indexes"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Create Search Index",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 201', () => {",
+											"    pm.response.to.have.status(201);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test('Validate the response and save collection variables', () => {",
+											"    const data = pm.response.json();",
+											"    pm.expect(data.id).to.exist;",
+											"    pm.expect(data.id).to.be.a.string;",
+											"    pm.collectionVariables.set('_searchIndexId', data.id);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{_accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/management/webstores/{{_webStoreId}}/search/indexes",
+									"host": [
+										"{{_instanceUrl}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"commerce",
+										"management",
+										"webstores",
+										"{{_webStoreId}}",
+										"search",
+										"indexes"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Search Index",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{_accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/management/webstores/{{_webStoreId}}/search/indexes/{{_searchIndexId}}",
+									"host": [
+										"{{_instanceUrl}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"commerce",
+										"management",
+										"webstores",
+										"{{_webStoreId}}",
+										"search",
+										"indexes",
+										"{{_searchIndexId}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Search Index Logs",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{_accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/management/webstores/{{_webStoreId}}/search/index-logs?pageSize=50",
+									"host": [
+										"{{_instanceUrl}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"commerce",
+										"management",
+										"webstores",
+										"{{_webStoreId}}",
+										"search",
+										"index-logs"
+									],
+									"query": [
+										{
+											"key": "pageSize",
+											"value": "50"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Product Search Settings",
+					"item": [
+						{
+							"name": "Get Product Search Settings",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"const productIds = [];",
+											"",
+											"for (let i = 1; i <= 3; i++) {",
+											"    let productId = pm.environment.get(`productId${i}`);",
+											"    if (productId) {",
+											"        productIds.push(productId);",
+											"    }",
+											"}",
+											"",
+											"pm.collectionVariables.set('_productIds', productIds.join());"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{_accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/management/webstores/{{_webStoreId}}/search/product-settings?ids={{_productIds}}",
+									"host": [
+										"{{_instanceUrl}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"commerce",
+										"management",
+										"webstores",
+										"{{_webStoreId}}",
+										"search",
+										"product-settings"
+									],
+									"query": [
+										{
+											"key": "ids",
+											"value": "{{_productIds}}"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Update Product Search Settings",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{_accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PATCH",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"searchProductSettings\": [\n        {\n            \"id\": \"{{productId1}}\",\n            \"searchable\": true\n        },\n        {\n            \"id\": \"{{productId2}}\",\n            \"searchable\": true\n        },\n        {\n            \"id\": \"{{productId3}}\",\n            \"searchable\": true\n        }\n    ]\n}"
+								},
+								"url": {
+									"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/management/webstores/{{_webStoreId}}/search/product-settings",
+									"host": [
+										"{{_instanceUrl}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"commerce",
+										"management",
+										"webstores",
+										"{{_webStoreId}}",
+										"search",
+										"product-settings"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Sorting Rules",
+					"item": [
+						{
+							"name": "Get Sorting Rules",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{_accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/management/webstores/{{_webStoreId}}/search/sort-rules",
+									"host": [
+										"{{_instanceUrl}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"commerce",
+										"management",
+										"webstores",
+										"{{_webStoreId}}",
+										"search",
+										"sort-rules"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Custom Field Id",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test('Validate the response and save collection variables', () => {",
+											"    const data = pm.response.json();",
+											"    pm.expect(data.id).to.exist;",
+											"    pm.expect(data.id).to.be.a.string;",
+											"    pm.collectionVariables.set('_searchIndex', data.id);",
+											"});",
+											"",
+											"pm.test('Validate the response and save collection variables', () => {",
+											"    let data = pm.response.json();",
+											"    pm.expect(data.records).to.exist;",
+											"    pm.expect(data.records).to.be.an('array');",
+											"    pm.expect(data.records.length).to.eql(1);",
+											"    pm.expect(data.records[0].Id).to.exist;",
+											"    pm.expect(data.records[0].Id).to.be.a.string;",
+											"    pm.collectionVariables.set('_sortOrderCustomFieldId', data.records[0].Id);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{_accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{_instanceUrl}}/services/data/v{{version}}/tooling/query?q=SELECT+Id,+TableEnumOrId,+DeveloperName+FROM+CustomField+WHERE+DeveloperName+='Flavor'",
+									"host": [
+										"{{_instanceUrl}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"tooling",
+										"query"
+									],
+									"query": [
+										{
+											"key": "q",
+											"value": "SELECT+Id,+TableEnumOrId,+DeveloperName+FROM+CustomField+WHERE+DeveloperName+='Flavor'"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Update Sorting Rules",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"const productIds = [];",
+											"",
+											"for (let i = 1; i <= 3; i++) {",
+											"    let productId = pm.environment.get(`productId${i}`);",
+											"    if (productId) {",
+											"        productIds.push(productId);",
+											"    }",
+											"}",
+											"",
+											"pm.collectionVariables.set('_productIds', productIds.join());"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{_accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"sortRules\": [\n        {\n            \"type\": \"Relevancy\",\n            \"sortOrder\": 1,\n            \"direction\": \"Default\"\n        },\n        {\n            \"type\": \"ProductBased\",\n            \"sortStandardField\": \"Name\",\n            \"direction\": \"Ascending\",\n            \"labelSuffix\": \"Ascending\",\n            \"sortOrder\": 2\n        },\n        {\n            \"type\": \"ProductBased\",\n            \"sortStandardField\": \"Name\",\n            \"direction\": \"Descending\",\n            \"labelSuffix\": \"Descending\",\n            \"sortOrder\": 3\n        },\n        {\n            \"type\": \"ProductBased\",\n            \"sortStandardField\": \"StockKeepingUnit\",\n            \"direction\": \"Ascending\",\n            \"labelSuffix\": \"Ascending\",\n            \"sortOrder\": 4\n        },\n        {\n            \"type\": \"ProductBased\",\n            \"sortStandardField\": \"StockKeepingUnit\",\n            \"direction\": \"Descending\",\n            \"labelSuffix\": \"Descending\",\n            \"sortOrder\": 5\n        },\n        {\n            \"type\": \"ProductAttributeBased\",\n            \"customFieldId\": \"{{_sortOrderCustomFieldId}}\",\n            \"direction\": \"Ascending\",\n            \"labelSuffix\": \"Ascending\",\n            \"sortOrder\": 6\n        }\n    ]\n}"
+								},
+								"url": {
+									"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/management/webstores/{{_webStoreId}}/search/sort-rules",
+									"host": [
+										"{{_instanceUrl}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"commerce",
+										"management",
+										"webstores",
+										"{{_webStoreId}}",
+										"search",
+										"sort-rules"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
 		}
 	],
 	"variable": [
