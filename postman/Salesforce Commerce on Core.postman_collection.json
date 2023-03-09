@@ -2445,6 +2445,173 @@
 			]
 		},
 		{
+			"name": "Webstore Product Prices",
+			"item": [
+				{
+					"name": "Get Product Pricing",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', () => {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response is valid and has a JSON body', () => {",
+									"     pm.response.to.be.success;",
+									"     pm.response.to.be.withBody;",
+									"     pm.response.to.be.json;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{_accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/pricing/products/{{productId1}}?effective​AccountId={{effectiveAccountId}}",
+							"host": [
+								"{{_instanceUrl}}"
+							],
+							"path": [
+								"services",
+								"data",
+								"v{{version}}",
+								"commerce",
+								"webstores",
+								"{{_webStoreId}}",
+								"pricing",
+								"products",
+								"{{productId1}}"
+							],
+							"query": [
+								{
+									"key": "effective​AccountId",
+									"value": "{{effectiveAccountId}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Multiple Products Pricing",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', () => {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response is valid and has a JSON body', () => {",
+									"     pm.response.to.be.success;",
+									"     pm.response.to.be.withBody;",
+									"     pm.response.to.be.json;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const productIds = [];",
+									"",
+									"for (let i = 1; i <= 3; i++) {",
+									"    let productId = pm.environment.get(`productId${i}`);",
+									"    if (productId) {",
+									"        productIds.push(productId);",
+									"    }",
+									"}",
+									"",
+									"pm.collectionVariables.set('_productIds', productIds.join());"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{_accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/pricing/products?productIds={{_productIds}}&effective​AccountId={{effectiveAccountId}}",
+							"host": [
+								"{{_instanceUrl}}"
+							],
+							"path": [
+								"services",
+								"data",
+								"v{{version}}",
+								"commerce",
+								"webstores",
+								"{{_webStoreId}}",
+								"pricing",
+								"products"
+							],
+							"query": [
+								{
+									"key": "productIds",
+									"value": "{{_productIds}}"
+								},
+								{
+									"key": "effective​AccountId",
+									"value": "{{effectiveAccountId}}"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
 			"name": "OMS Products",
 			"item": [
 				{
@@ -5889,6 +6056,10 @@
 		},
 		{
 			"key": "_webStoreId",
+			"value": ""
+		},
+		{
+			"key": "_productIds",
 			"value": ""
 		}
 	]
