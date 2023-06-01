@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "f6fc5acd-048f-42b9-b07e-3fc6ecb48a3e",
+		"_postman_id": "4ccf7ff3-1a5f-404d-b4f5-65fe04a4bc43",
 		"name": "Salesforce Commerce on Core",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "19492"
@@ -4125,7 +4125,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"deliveryAddress\": {\n        \"name\": \"{{deliveryAddressFirstName}} {{deliveryAddressLastName}}\",\n        \"street\": \"{{deliveryAddressStreet}}\",\n        \"city\": \"{{deliveryAddressCity}}\",\n        \"region\": \"{{deliveryAddressRegion}}\",\n        \"postalCode\": \"{{deliveryAddressPostalCode}}\",\n        \"country\": \"{{deliveryAddressCountry}}\"\n    },\n    \"desiredDeliveryDate\": \"{{_desiredDeliveryDate}}\",\n    \"shippingInstructions\": \"{{shippingInstructions}}\"\n}"
+									"raw": "{\n    \"deliveryAddress\": {\n        \"firstName\": \"{{deliveryAddressFirstName}}\",\n        \"lastName\": \"{{deliveryAddressLastName}}\",\n        \"street\": \"{{deliveryAddressStreet}}\",\n        \"city\": \"{{deliveryAddressCity}}\",\n        \"region\": \"{{deliveryAddressRegion}}\",\n        \"postalCode\": \"{{deliveryAddressPostalCode}}\",\n        \"country\": \"{{deliveryAddressCountry}}\"\n    },\n    \"desiredDeliveryDate\": \"{{_desiredDeliveryDate}}\",\n    \"shippingInstructions\": \"{{shippingInstructions}}\"\n}"
 								},
 								"url": {
 									"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/checkouts/{{_checkoutId}}",
@@ -4516,7 +4516,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"deliveryAddress\": {\n        \"name\": \"{{deliveryAddressFirstName}} {{deliveryAddressLastName}}\",\n        \"street\": \"{{deliveryAddressStreet}}\",\n        \"city\": \"{{deliveryAddressCity}}\",\n        \"region\": \"{{deliveryAddressRegion}}\",\n        \"postalCode\": \"{{deliveryAddressPostalCode}}\",\n        \"country\": \"{{deliveryAddressCountry}}\"\n    },\n    \"desiredDeliveryDate\": \"{{_desiredDeliveryDate}}\",\n    \"shippingInstructions\": \"{{shippingInstructions}}\"\n}"
+							"raw": "{\n    \"deliveryAddress\": {\n        \"firstName\": \"{{deliveryAddressFirstName}}\",\n        \"lastName\": \"{{deliveryAddressLastName}}\",\n        \"street\": \"{{deliveryAddressStreet}}\",\n        \"city\": \"{{deliveryAddressCity}}\",\n        \"region\": \"{{deliveryAddressRegion}}\",\n        \"postalCode\": \"{{deliveryAddressPostalCode}}\",\n        \"country\": \"{{deliveryAddressCountry}}\"\n    },\n    \"desiredDeliveryDate\": \"{{_desiredDeliveryDate}}\",\n    \"shippingInstructions\": \"{{shippingInstructions}}\"\n}"
 						},
 						"url": {
 							"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/checkouts/{{_checkoutId}}",
@@ -4623,68 +4623,6 @@
 					"response": []
 				},
 				{
-					"name": "Cancel Checkout",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test('Status code is 204', () => {",
-									"    pm.response.to.have.status(204);",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						},
-						{
-							"listen": "prerequest",
-							"script": {
-								"exec": [
-									""
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{_accessToken}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "DELETE",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/checkouts/{{_checkoutId}}",
-							"host": [
-								"{{_instanceUrl}}"
-							],
-							"path": [
-								"services",
-								"data",
-								"v{{version}}",
-								"commerce",
-								"webstores",
-								"{{_webStoreId}}",
-								"checkouts",
-								"{{_checkoutId}}"
-							]
-						}
-					},
-					"response": []
-				},
-				{
 					"name": "Patch Delivery Method",
 					"event": [
 						{
@@ -4744,6 +4682,68 @@
 							"mode": "raw",
 							"raw": "{\n    \"delivery​MethodId\": \"{{_deliveryMethodId}}\"\n}"
 						},
+						"url": {
+							"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/checkouts/{{_checkoutId}}",
+							"host": [
+								"{{_instanceUrl}}"
+							],
+							"path": [
+								"services",
+								"data",
+								"v{{version}}",
+								"commerce",
+								"webstores",
+								"{{_webStoreId}}",
+								"checkouts",
+								"{{_checkoutId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Cancel Checkout",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 204', () => {",
+									"    pm.response.to.have.status(204);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{_accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
 						"url": {
 							"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/checkouts/{{_checkoutId}}",
 							"host": [
@@ -6991,7 +6991,23 @@
 			"value": ""
 		},
 		{
-			"key": "_productIds",
+			"key": "_cartId",
+			"value": ""
+		},
+		{
+			"key": "_cartItemId",
+			"value": ""
+		},
+		{
+			"key": "_checkoutId",
+			"value": ""
+		},
+		{
+			"key": "_desiredDeliveryDate",
+			"value": ""
+		},
+		{
+			"key": "_deliveryMethodId",
 			"value": ""
 		}
 	]
