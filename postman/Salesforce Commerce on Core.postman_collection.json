@@ -45,7 +45,7 @@
 			"name": "Auth Salesforce API",
 			"item": [
 				{
-					"name": "Auth Salesforce API via Connected App",
+					"name": "Auth Salesforce API via Connected App (password)",
 					"event": [
 						{
 							"listen": "test",
@@ -131,6 +131,98 @@
 							"raw": "{{loginUrl}}/services/oauth2/token",
 							"host": [
 								"{{loginUrl}}"
+							],
+							"path": [
+								"services",
+								"oauth2",
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Auth Salesforce API via Connected App (client_credentials)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', () => {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response is valid and has a JSON body', () => {",
+									"     pm.response.to.be.ok;",
+									"     pm.response.to.be.withBody;",
+									"     pm.response.to.be.json;",
+									"});",
+									"",
+									"pm.test('Validate the access token is found in the body and save it to the variables', () => {",
+									"    const data = pm.response.json();",
+									"    pm.expect(data.token_type).to.exist;",
+									"    pm.expect(data.token_type).to.be.a.string;",
+									"    pm.expect(data.access_token).to.exist;",
+									"    pm.expect(data.access_token).to.be.a.string;",
+									"    const id = data.id.split('/');",
+									"",
+									"    pm.collectionVariables.set('_accessToken', data.access_token);",
+									"    pm.collectionVariables.set('_instanceUrl', data.instance_url);",
+									"    pm.collectionVariables.set('_userId', id.pop());",
+									"    pm.collectionVariables.set('orgId', id.pop());",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Clean up the variables",
+									"pm.collectionVariables.clear();"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{clientSecret}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{clientId}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "grant_type",
+									"value": "client_credentials",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{_instanceUrl}}/services/oauth2/token",
+							"host": [
+								"{{_instanceUrl}}"
 							],
 							"path": [
 								"services",
@@ -6984,30 +7076,6 @@
 		},
 		{
 			"key": "orgId",
-			"value": ""
-		},
-		{
-			"key": "_webStoreId",
-			"value": ""
-		},
-		{
-			"key": "_cartId",
-			"value": ""
-		},
-		{
-			"key": "_cartItemId",
-			"value": ""
-		},
-		{
-			"key": "_checkoutId",
-			"value": ""
-		},
-		{
-			"key": "_desiredDeliveryDate",
-			"value": ""
-		},
-		{
-			"key": "_deliveryMethodId",
 			"value": ""
 		}
 	]
