@@ -234,6 +234,94 @@
 					"response": []
 				},
 				{
+					"name": "Auth Salesforce API via Connected App (JWT bearer flow)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', () => {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response is valid and has a JSON body', () => {",
+									"     pm.response.to.be.ok;",
+									"     pm.response.to.be.withBody;",
+									"     pm.response.to.be.json;",
+									"});",
+									"",
+									"pm.test('Validate the access token is found in the body and save it to the variables', () => {",
+									"    const data = pm.response.json();",
+									"    pm.expect(data.token_type).to.exist;",
+									"    pm.expect(data.token_type).to.be.a.string;",
+									"    pm.expect(data.access_token).to.exist;",
+									"    pm.expect(data.access_token).to.be.a.string;",
+									"    const id = data.id.split('/');",
+									"",
+									"    pm.collectionVariables.set('_accessToken', data.access_token);",
+									"    pm.collectionVariables.set('_instanceUrl', data.instance_url);",
+									"    pm.collectionVariables.set('_userId', id.pop());",
+									"    pm.collectionVariables.set('orgId', id.pop());",
+									"",
+									"    console.log(pm.collectionVariables.get('_userId'))",
+									"    console.log(pm.collectionVariables.get('orgId'))",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded",
+								"type": "text"
+							},
+							{
+								"key": "",
+								"value": "",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "assertion",
+									"value": "{{jwtAssertion}}",
+									"type": "text"
+								},
+								{
+									"key": "grant_type",
+									"value": "urn:ietf:params:oauth:grant-type:jwt-bearer",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "https://login.salesforce.com/services/oauth2/token",
+							"protocol": "https",
+							"host": [
+								"login",
+								"salesforce",
+								"com"
+							],
+							"path": [
+								"services",
+								"oauth2",
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Login Admin",
 					"event": [
 						{
