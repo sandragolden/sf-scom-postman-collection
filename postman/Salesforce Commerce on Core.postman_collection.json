@@ -51,6 +51,8 @@
 							"listen": "test",
 							"script": {
 								"exec": [
+									"const context = pm.environment.name ? pm.environment : pm.collectionVariables;",
+									"",
 									"pm.test('Status code is 200', () => {",
 									"    pm.response.to.have.status(200);",
 									"});",
@@ -69,10 +71,13 @@
 									"    pm.expect(data.access_token).to.be.a.string;",
 									"    const id = data.id.split('/');",
 									"",
-									"    pm.collectionVariables.set('_accessToken', data.access_token);",
-									"    pm.collectionVariables.set('_instanceUrl', data.instance_url);",
-									"    pm.collectionVariables.set('_userId', id.pop());",
-									"    pm.collectionVariables.set('orgId', id.pop());",
+									"    context.set('instanceUrl', data.instance_url);",
+									"    context.set('_accessToken', data.access_token);",
+									"    context.set('_userId', id.pop());",
+									"    context.set('orgId', id.pop());",
+									"",
+									"    console.log(`userId: ${context.get('_userId')}`)",
+									"    console.log(`orgId: ${context.get('orgId')}`)",
 									"});"
 								],
 								"type": "text/javascript"
@@ -148,6 +153,8 @@
 							"listen": "test",
 							"script": {
 								"exec": [
+									"const context = pm.environment.name ? pm.environment : pm.collectionVariables;",
+									"",
 									"pm.test('Status code is 200', () => {",
 									"    pm.response.to.have.status(200);",
 									"});",
@@ -166,10 +173,13 @@
 									"    pm.expect(data.access_token).to.be.a.string;",
 									"    const id = data.id.split('/');",
 									"",
-									"    pm.collectionVariables.set('_accessToken', data.access_token);",
-									"    pm.collectionVariables.set('_instanceUrl', data.instance_url);",
-									"    pm.collectionVariables.set('_userId', id.pop());",
-									"    pm.collectionVariables.set('orgId', id.pop());",
+									"    context.set('instanceUrl', data.instance_url);",
+									"    context.set('_accessToken', data.access_token);",
+									"    context.set('_userId', id.pop());",
+									"    context.set('orgId', id.pop());",
+									"",
+									"    console.log(`userId: ${context.get('_userId')}`)",
+									"    console.log(`orgId: ${context.get('orgId')}`)",
 									"});"
 								],
 								"type": "text/javascript"
@@ -220,9 +230,9 @@
 							]
 						},
 						"url": {
-							"raw": "{{_instanceUrl}}/services/oauth2/token",
+							"raw": "{{instanceUrl}}/services/oauth2/token",
 							"host": [
-								"{{_instanceUrl}}"
+								"{{instanceUrl}}"
 							],
 							"path": [
 								"services",
@@ -240,6 +250,8 @@
 							"listen": "test",
 							"script": {
 								"exec": [
+									"const context = pm.environment.name ? pm.environment : pm.collectionVariables;",
+									"",
 									"pm.test('Status code is 200', () => {",
 									"    pm.response.to.have.status(200);",
 									"});",
@@ -258,13 +270,71 @@
 									"    pm.expect(data.access_token).to.be.a.string;",
 									"    const id = data.id.split('/');",
 									"",
-									"    pm.collectionVariables.set('_accessToken', data.access_token);",
-									"    pm.collectionVariables.set('_instanceUrl', data.instance_url);",
-									"    pm.collectionVariables.set('_userId', id.pop());",
-									"    pm.collectionVariables.set('orgId', id.pop());",
+									"    context.set('instanceUrl', data.instance_url);",
+									"    context.set('_accessToken', data.access_token);",
+									"    context.set('_userId', id.pop());",
+									"    context.set('orgId', id.pop());",
 									"",
-									"    console.log(pm.collectionVariables.get('_userId'))",
-									"    console.log(pm.collectionVariables.get('orgId'))",
+									"    console.log(`userId: ${context.get('_userId')}`)",
+									"    console.log(`orgId: ${context.get('orgId')}`)",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const context = pm.environment.name ? pm.environment : pm.collectionVariables;",
+									"",
+									"const cdpTokenRefreshTime = context.get(\"_cdpTokenRefreshTime\") || 0;",
+									"console.log(\"token refresh time: \" + cdpTokenRefreshTime);",
+									"",
+									"const cdpTokenAge = Math.round((Date.now() - cdpTokenRefreshTime) / 60000);",
+									"console.log (\"cdpTokenAge: \" + cdpTokenAge);",
+									"",
+									"if (cdpTokenAge < 115) {",
+									"    console.log(\"cdp token valid\");",
+									"    return;",
+									"}",
+									"",
+									"console.log(\"refreshing token...\");",
+									"context.set(\"_cdpTokenRefreshTime\", Date.now());",
+									"",
+									"var navigator = {}; //fake a navigator object for the lib",
+									"var window = {}; //fake a window object for the lib",
+									"",
+									"// load external library to sign jwt - https://kjur.github.io/jsrsasign/",
+									"pm.sendRequest(\"https://cdnjs.cloudflare.com/ajax/libs/jsrsasign/10.1.13/jsrsasign-all-min.js\", (error, response) => {",
+									"    if (error || response.code !== 200) {",
+									"        pm.expect.fail('Could not load jsrsasign library');",
+									"    }",
+									"    eval(response.text());",
+									"",
+									"    // define jwt header",
+									"    const header = {",
+									"        \"alg\": \"RS256\",",
+									"        \"typ\": \"JWT\"",
+									"    };",
+									"",
+									"    // define jwt payload",
+									"    const payload = {",
+									"        \"iss\": context.get('clientId'),",
+									"        \"sub\": context.get('username'),",
+									"        \"aud\": context.get('loginUrl'),",
+									"        \"exp\": Math.round(Date.now() / 1000)",
+									"    }",
+									"",
+									"    // create and sign jwt ",
+									"    let jwt;",
+									"    try {",
+									"        jwt = KJUR.jws.JWS.sign(null, header, payload, context.get('privateKey'));",
+									"        console.log(\"JWT Assertion: \" + jwt);",
+									"        context.set('_jwtAssertion', jwt);",
+									"    } catch (error) {",
+									"        pm.expect.fail('Failed to sign the JWT assertion: '+ error);",
+									"    }",
 									"});"
 								],
 								"type": "text/javascript"
@@ -281,12 +351,6 @@
 								"key": "Content-Type",
 								"value": "application/x-www-form-urlencoded",
 								"type": "text"
-							},
-							{
-								"key": "",
-								"value": "",
-								"type": "text",
-								"disabled": true
 							}
 						],
 						"body": {
@@ -294,7 +358,7 @@
 							"urlencoded": [
 								{
 									"key": "assertion",
-									"value": "{{jwtAssertion}}",
+									"value": "{{_jwtAssertion}}",
 									"type": "text"
 								},
 								{
@@ -305,16 +369,100 @@
 							]
 						},
 						"url": {
-							"raw": "https://login.salesforce.com/services/oauth2/token",
-							"protocol": "https",
+							"raw": "{{loginUrl}}/services/oauth2/token",
 							"host": [
-								"login",
-								"salesforce",
-								"com"
+								"{{loginUrl}}"
 							],
 							"path": [
 								"services",
 								"oauth2",
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Exchange Access Token for Data Cloud Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const context = pm.environment.name ? pm.environment : pm.collectionVariables;",
+									"",
+									"pm.test('Status code is 200', () => {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response is valid and has a JSON body', () => {",
+									"     pm.response.to.be.ok;",
+									"     pm.response.to.be.withBody;",
+									"     pm.response.to.be.json;",
+									"});",
+									"",
+									"pm.test('Validate the access token is found in the body and save it to the variables', () => {",
+									"    const data = pm.response.json();",
+									"    pm.expect(data.access_token).to.exist;",
+									"    pm.expect(data.access_token).to.be.a.string;",
+									"",
+									"    context.set(\"_cdpToken\", data.access_token);",
+									"    context.set(\"_cdpUrl\", data.instance_url);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "subject_token",
+									"value": "{{_accessToken}}",
+									"type": "text"
+								},
+								{
+									"key": "grant_type",
+									"value": "urn:salesforce:grant-type:external:cdp",
+									"type": "text"
+								},
+								{
+									"key": "subject_token_type",
+									"value": "urn:ietf:params:oauth:token-type:access_token",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{instanceUrl}}/services/a360/token",
+							"host": [
+								"{{instanceUrl}}"
+							],
+							"path": [
+								"services",
+								"a360",
 								"token"
 							]
 						}
@@ -530,9 +678,9 @@
 							}
 						],
 						"url": {
-							"raw": "{{_instanceUrl}}/services/data/v{{version}}/query/?q=SELECT+Id,+ExternalReference,+Name,+Type,+DefaultTaxLocaleType+FROM+WebStore+WHERE+Name+=+'{{webStoreName}}'",
+							"raw": "{{instanceUrl}}/services/data/v{{version}}/query/?q=SELECT+Id,+ExternalReference,+Name,+Type,+DefaultTaxLocaleType+FROM+WebStore+WHERE+Name+=+'{{webStoreName}}'",
 							"host": [
-								"{{_instanceUrl}}"
+								"{{instanceUrl}}"
 							],
 							"path": [
 								"services",
@@ -610,9 +758,9 @@
 							}
 						},
 						"url": {
-							"raw": "{{_instanceUrl}}/services/data/v{{version}}/composite",
+							"raw": "{{instanceUrl}}/services/data/v{{version}}/composite",
 							"host": [
-								"{{_instanceUrl}}"
+								"{{instanceUrl}}"
 							],
 							"path": [
 								"services",
@@ -697,9 +845,9 @@
 							}
 						},
 						"url": {
-							"raw": "{{_instanceUrl}}/services/data/v{{version}}/composite",
+							"raw": "{{instanceUrl}}/services/data/v{{version}}/composite",
 							"host": [
-								"{{_instanceUrl}}"
+								"{{instanceUrl}}"
 							],
 							"path": [
 								"services",
@@ -775,9 +923,9 @@
 							"raw": "{\n    \"allOrNone\": true,\n    \"compositeRequest\": [\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,+Name,+Status,+ApiVersion+FROM+ApexClass+WHERE+Name+=+'{{paymentGatewayProviderApexClassName}}'+LIMIT+1\",\n            \"referenceId\": \"apexClass\"\n        },\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,+DeveloperName,+Endpoint+FROM+NamedCredential+WHERE+DeveloperName+=+'{{namedCredentialDeveloperName}}'+LIMIT+1\",\n            \"referenceId\": \"namedCredential\"\n        },\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,+DeveloperName,+MasterLabel,+ApexAdapterId,+IdempotencySupported,+Language+FROM+PaymentGatewayProvider+WHERE+ApexAdapterId+=+'@{apexClass.records[0].Id}'+AND+DeveloperName+=+'{{paymentGatewayProviderDeveloperName}}'+LIMIT+1\",\n            \"referenceId\": \"paymentGatewayProvider\"\n        },\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,ExternalReference+FROM+PaymentGateway+WHERE+PaymentGatewayProviderId+=+'@{paymentGatewayProvider.records[0].Id}'+AND+MerchantCredentialId+=+'@{namedCredential.records[0].Id}'+AND+PaymentGatewayName+=+'{{paymentGatewayName}}'+AND+Status+='Active'+LIMIT+1\",\n            \"referenceId\": \"paymentGateway\"\n        }\n    ]\n}"
 						},
 						"url": {
-							"raw": "{{_instanceUrl}}/services/data/v{{version}}/composite",
+							"raw": "{{instanceUrl}}/services/data/v{{version}}/composite",
 							"host": [
-								"{{_instanceUrl}}"
+								"{{instanceUrl}}"
 							],
 							"path": [
 								"services",
@@ -853,9 +1001,9 @@
 									"raw": "{\n    \"allOrNone\": true,\n    \"compositeRequest\": [\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id+FROM+ApexClass+WHERE+Name+=+'{{extSvcApexClassNameInventory}}'+AND+Status+='Active'+LIMIT+1\",\n            \"referenceId\": \"inventoryApexClass\"\n        },\n        {\n            \"method\": \"POST\",\n            \"url\": \"/services/data/v{{version}}/sobjects/RegisteredExternalService\",\n            \"referenceId\": \"inventoryRegisteredExternalService\",\n            \"body\": {\n                \"ExternalServiceProviderId\": \"@{inventoryApexClass.records[0].Id}\",\n                \"ExternalServiceProviderType\": \"Inventory\",\n                \"DeveloperName\": \"{{extSvcDeveloperNameInventory}}\",\n                \"MasterLabel\": \"{{extSvcDeveloperNameInventory}}\"\n            }\n        }\n    ]\n}"
 								},
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/composite",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/composite",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -920,9 +1068,9 @@
 									"raw": "{\n    \"Integration\": \"Inventory__{{extSvcDeveloperNameInventory}}\",\n    \"StoreId\": \"{{_webStoreId}}\",\n    \"ServiceProviderType\": \"Inventory\"\n}"
 								},
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/sobjects/StoreIntegratedService",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/sobjects/StoreIntegratedService",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -999,9 +1147,9 @@
 									"raw": "{\n    \"allOrNone\": true,\n    \"compositeRequest\": [\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,+Name,+Status,+ApiVersion+FROM+ApexClass+WHERE+Name+=+'{{extSvcApexClassNameInventory}}'\",\n            \"referenceId\": \"inventoryApexClass\"\n        },\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,+DeveloperName,+Language,+MasterLabel,+NamespacePrefix,+ExternalServiceProviderId,+ExternalServiceProviderType+FROM+RegisteredExternalService+WHERE+ExternalServiceProviderId+=+'@{inventoryApexClass.records[0].Id}'+AND+DeveloperName+=+'{{extSvcDeveloperNameInventory}}'+AND+ExternalServiceProviderType+=+'Inventory'\",\n            \"referenceId\": \"inventoryRegisteredExternalService\"\n        },\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,+StoreId,+Integration,+ServiceProviderType+FROM+StoreIntegratedService+WHERE+Integration+=+'Inventory__{{extSvcDeveloperNameInventory}}'+AND+ServiceProviderType='Inventory'+AND StoreId='{{_webStoreId}}'\",\n            \"referenceId\": \"inventoryStoreIntegratedService\"\n        }\n    ]\n}"
 								},
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/composite",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/composite",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -1074,9 +1222,9 @@
 									"raw": "{\n    \"allOrNone\": true,\n    \"compositeRequest\": [\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id+FROM+ApexClass+WHERE+Name+=+'{{extSvcApexClassNameShipment}}'+AND+Status+='Active'+LIMIT+1\",\n            \"referenceId\": \"shipmentApexClass\"\n        },\n        {\n            \"method\": \"POST\",\n            \"url\": \"/services/data/v{{version}}/sobjects/RegisteredExternalService\",\n            \"referenceId\": \"shipmentRegisteredExternalService\",\n            \"body\": {\n                \"ExternalServiceProviderId\": \"@{shipmentApexClass.records[0].Id}\",\n                \"ExternalServiceProviderType\": \"Shipment\",\n                \"DeveloperName\": \"{{extSvcDeveloperNameShipment}}\",\n                \"MasterLabel\": \"{{extSvcDeveloperNameShipment}}\"\n            }\n        }\n    ]\n}"
 								},
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/composite",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/composite",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -1141,9 +1289,9 @@
 									"raw": "{\n    \"Integration\": \"Shipment__{{extSvcDeveloperNameShipment}}\",\n    \"StoreId\": \"{{_webStoreId}}\",\n    \"ServiceProviderType\": \"Shipment\"\n}"
 								},
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/sobjects/StoreIntegratedService",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/sobjects/StoreIntegratedService",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -1220,9 +1368,9 @@
 									"raw": "{\n    \"allOrNone\": true,\n    \"compositeRequest\": [\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,+Name,+Status,+ApiVersion+FROM+ApexClass+WHERE+Name+=+'{{extSvcApexClassNameShipment}}'\",\n            \"referenceId\": \"shipmentApexClass\"\n        },\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,+DeveloperName,+Language,+MasterLabel,+NamespacePrefix,+ExternalServiceProviderId,+ExternalServiceProviderType+FROM+RegisteredExternalService+WHERE+ExternalServiceProviderId+=+'@{shipmentApexClass.records[0].Id}'+AND+DeveloperName+=+'{{extSvcDeveloperNameShipment}}'+AND+ExternalServiceProviderType+=+'Shipment'\",\n            \"referenceId\": \"shipmentRegisteredExternalService\"\n        },\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,+StoreId,+Integration,+ServiceProviderType+FROM+StoreIntegratedService+WHERE+Integration+=+'Shipment__{{extSvcDeveloperNameShipment}}'+AND+ServiceProviderType='Shipment'+AND StoreId='{{_webStoreId}}'\",\n            \"referenceId\": \"shipmentStoreIntegratedService\"\n        }\n    ]\n}"
 								},
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/composite",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/composite",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -1295,9 +1443,9 @@
 									"raw": "{\n    \"allOrNone\": true,\n    \"compositeRequest\": [\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id+FROM+ApexClass+WHERE+Name+=+'{{extSvcApexClassNameTax}}'+AND+Status+='Active'+LIMIT+1\",\n            \"referenceId\": \"taxApexClass\"\n        },\n        {\n            \"method\": \"POST\",\n            \"url\": \"/services/data/v{{version}}/sobjects/RegisteredExternalService\",\n            \"referenceId\": \"taxRegisteredExternalService\",\n            \"body\": {\n                \"ExternalServiceProviderId\": \"@{taxApexClass.records[0].Id}\",\n                \"ExternalServiceProviderType\": \"Tax\",\n                \"DeveloperName\": \"{{extSvcDeveloperNameTax}}\",\n                \"MasterLabel\": \"{{extSvcDeveloperNameTax}}\"\n            }\n        }\n    ]\n}"
 								},
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/composite",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/composite",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -1362,9 +1510,9 @@
 									"raw": "{\n    \"Integration\": \"Tax__{{extSvcDeveloperNameTax}}\",\n    \"StoreId\": \"{{_webStoreId}}\",\n    \"ServiceProviderType\": \"Tax\"\n}"
 								},
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/sobjects/StoreIntegratedService",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/sobjects/StoreIntegratedService",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -1441,9 +1589,9 @@
 									"raw": "{\n    \"allOrNone\": true,\n    \"compositeRequest\": [\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,+Name,+Status,+ApiVersion+FROM+ApexClass+WHERE+Name+=+'{{extSvcApexClassNameTax}}'\",\n            \"referenceId\": \"taxApexClass\"\n        },\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,+DeveloperName,+Language,+MasterLabel,+NamespacePrefix,+ExternalServiceProviderId,+ExternalServiceProviderType+FROM+RegisteredExternalService+WHERE+ExternalServiceProviderId+=+'@{taxApexClass.records[0].Id}'+AND+DeveloperName+=+'{{extSvcDeveloperNameTax}}'+AND+ExternalServiceProviderType+=+'Tax'\",\n            \"referenceId\": \"taxRegisteredExternalService\"\n        },\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,+StoreId,+Integration,+ServiceProviderType+FROM+StoreIntegratedService+WHERE+Integration+=+'Tax__{{extSvcDeveloperNameTax}}'+AND+ServiceProviderType='Tax'+AND StoreId='{{_webStoreId}}'\",\n            \"referenceId\": \"taxStoreIntegratedService\"\n        }\n    ]\n}"
 								},
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/composite",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/composite",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -1516,9 +1664,9 @@
 									"raw": "{\n    \"allOrNone\": true,\n    \"compositeRequest\": [\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id+FROM+ApexClass+WHERE+Name+=+'{{extSvcApexClassNamePrice}}'+AND+Status+='Active'+LIMIT+1\",\n            \"referenceId\": \"priceApexClass\"\n        },\n        {\n            \"method\": \"POST\",\n            \"url\": \"/services/data/v{{version}}/sobjects/RegisteredExternalService\",\n            \"referenceId\": \"priceRegisteredExternalService\",\n            \"body\": {\n                \"ExternalServiceProviderId\": \"@{priceApexClass.records[0].Id}\",\n                \"ExternalServiceProviderType\": \"Price\",\n                \"DeveloperName\": \"{{extSvcDeveloperNamePrice}}\",\n                \"MasterLabel\": \"{{extSvcDeveloperNamePrice}}\"\n            }\n        }\n    ]\n}"
 								},
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/composite",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/composite",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -1583,9 +1731,9 @@
 									"raw": "{\n    \"Integration\": \"Price__{{extSvcDeveloperNamePrice}}\",\n    \"StoreId\": \"{{_webStoreId}}\",\n    \"ServiceProviderType\": \"Price\"\n}"
 								},
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/sobjects/StoreIntegratedService",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/sobjects/StoreIntegratedService",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -1662,9 +1810,9 @@
 									"raw": "{\n    \"allOrNone\": true,\n    \"compositeRequest\": [\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,+Name,+Status,+ApiVersion+FROM+ApexClass+WHERE+Name+=+'{{extSvcApexClassNamePrice}}'\",\n            \"referenceId\": \"priceApexClass\"\n        },\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,+DeveloperName,+Language,+MasterLabel,+NamespacePrefix,+ExternalServiceProviderId,+ExternalServiceProviderType+FROM+RegisteredExternalService+WHERE+ExternalServiceProviderId+=+'@{priceApexClass.records[0].Id}'+AND+DeveloperName+=+'{{extSvcDeveloperNamePrice}}'+AND+ExternalServiceProviderType+=+'Price'\",\n            \"referenceId\": \"priceRegisteredExternalService\"\n        },\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,+StoreId,+Integration,+ServiceProviderType+FROM+StoreIntegratedService+WHERE+Integration+=+'Price__{{extSvcDeveloperNamePrice}}'+AND+ServiceProviderType='Price'+AND StoreId='{{_webStoreId}}'\",\n            \"referenceId\": \"priceStoreIntegratedService\"\n        }\n    ]\n}"
 								},
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/composite",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/composite",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -1748,9 +1896,9 @@
 									"raw": "{\n    \"allOrNone\": true,\n    \"compositeRequest\": [\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id+FROM+PaymentGateway+WHERE+PaymentGatewayName+=+'{{paymentGatewayName}}'+AND+Status+='Active'+LIMIT+1\",\n            \"referenceId\": \"paymentGateway\"\n        },\n        {\n            \"method\": \"POST\",\n            \"url\": \"/services/data/v{{version}}/sobjects/StoreIntegratedService\",\n            \"referenceId\": \"paymentStoreIntegratedService\",\n            \"body\": {\n                \"Integration\": \"@{paymentGateway.records[0].Id}\",\n                \"StoreId\": \"{{_webStoreId}}\",\n                \"ServiceProviderType\": \"Payment\"\n            }\n        }\n    ]\n}"
 								},
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/composite",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/composite",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -1828,9 +1976,9 @@
 									"raw": "{\n    \"allOrNone\": true,\n    \"compositeRequest\": [\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,+Name,+Status,+ApiVersion+FROM+ApexClass+WHERE+Name+=+'{{paymentGatewayProviderApexClassName}}'+LIMIT+1\",\n            \"referenceId\": \"apexClass\"\n        },\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,+DeveloperName,+Endpoint+FROM+NamedCredential+WHERE+DeveloperName+=+'{{namedCredentialDeveloperName}}'+LIMIT+1\",\n            \"referenceId\": \"namedCredential\"\n        },\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,+DeveloperName,+MasterLabel,+ApexAdapterId,+IdempotencySupported,+Language+FROM+PaymentGatewayProvider+WHERE+ApexAdapterId+=+'@{apexClass.records[0].Id}'+AND+DeveloperName+=+'{{paymentGatewayProviderDeveloperName}}'+LIMIT+1\",\n            \"referenceId\": \"paymentGatewayProvider\"\n        },\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id+FROM+PaymentGateway+WHERE+PaymentGatewayProviderId+=+'@{paymentGatewayProvider.records[0].Id}'+AND+MerchantCredentialId+=+'@{namedCredential.records[0].Id}'+AND+PaymentGatewayName+=+'{{paymentGatewayName}}'+AND+Status+='Active'+LIMIT+1\",\n            \"referenceId\": \"paymentGateway\"\n        },\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,+StoreId,+Integration,+ServiceProviderType+FROM+StoreIntegratedService+WHERE+Integration+=+'@{paymentGateway.records[0].Id}'+AND+ServiceProviderType='Payment'+AND StoreId='{{_webStoreId}}'\",\n            \"referenceId\": \"paymentStoreIntegratedService\"\n        }\n    ]\n}"
 								},
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/composite",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/composite",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -1893,9 +2041,9 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/application-context",
+							"raw": "{{instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/application-context",
 							"host": [
-								"{{_instanceUrl}}"
+								"{{instanceUrl}}"
 							],
 							"path": [
 								"services",
@@ -1954,9 +2102,9 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/session-context",
+							"raw": "{{instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/session-context",
 							"host": [
-								"{{_instanceUrl}}"
+								"{{instanceUrl}}"
 							],
 							"path": [
 								"services",
@@ -2045,9 +2193,9 @@
 									"raw": "{\n    \"allOrNone\": true,\n    \"compositeRequest\": [\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,+Name,+ProductCatalogId,+SalesStoreId+FROM+WebStoreCatalog+WHERE+SalesStoreId+=+'{{_webStoreId}}'\",\n            \"referenceId\": \"productCatalog\"\n        },\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,+Name,+Description+FROM+ManagedContentSpace+WHERE+Name+LIKE+'%25{{webStoreName}}%25'+LIMIT+1\",\n            \"referenceId\": \"cmsWorkspace\"\n        },\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,+Name+FROM+Pricebook2+WHERE+Name+=+'{{priceBookOriginalName}}'+LIMIT+1\",\n            \"referenceId\": \"priceBookOriginal\"\n        },\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,+Name+FROM+Pricebook2+WHERE+Name+=+'{{priceBookSalesName}}'+LIMIT+1\",\n            \"referenceId\": \"priceBookSales\"\n        },\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,+Name+FROM+CommerceEntitlementPolicy+WHERE+Name+LIKE+'%25{{webStoreName}}%25'+LIMIT+1\",\n            \"referenceId\": \"defaultEntitlementPolicy\"\n        }\n    ]\n}"
 								},
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/composite",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/composite",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -2170,9 +2318,9 @@
 									}
 								},
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/sobjects/ContentVersion",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/sobjects/ContentVersion",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -2237,9 +2385,9 @@
 									}
 								],
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/query/?q=SELECT+Id,+ContentDocumentId+FROM+ContentVersion+WHERE+Id=+'{{_contentVersionId}}'",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/query/?q=SELECT+Id,+ContentDocumentId+FROM+ContentVersion+WHERE+Id=+'{{_contentVersionId}}'",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -2310,9 +2458,9 @@
 									}
 								],
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/query/?q=SELECT+Id,+Title+FROM+ContentDocument+WHERE+Title+=+'{{productCsvFileName}}'+LIMIT+1",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/query/?q=SELECT+Id,+Title+FROM+ContentDocument+WHERE+Title+=+'{{productCsvFileName}}'+LIMIT+1",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -2387,9 +2535,9 @@
 									}
 								},
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/management/webstores/{{_webStoreId}}/product-import",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/commerce/management/webstores/{{_webStoreId}}/product-import",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -2456,9 +2604,9 @@
 									}
 								},
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/management/webstores/{{_webStoreId}}/product-import",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/commerce/management/webstores/{{_webStoreId}}/product-import",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -2540,9 +2688,9 @@
 							}
 						],
 						"url": {
-							"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/products?skus={{_productSkus}}",
+							"raw": "{{instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/products?skus={{_productSkus}}",
 							"host": [
-								"{{_instanceUrl}}"
+								"{{instanceUrl}}"
 							],
 							"path": [
 								"services",
@@ -2604,9 +2752,9 @@
 							}
 						],
 						"url": {
-							"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/products/{{productId1}}",
+							"raw": "{{instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/products/{{productId1}}",
 							"host": [
-								"{{_instanceUrl}}"
+								"{{instanceUrl}}"
 							],
 							"path": [
 								"services",
@@ -2677,9 +2825,9 @@
 							}
 						],
 						"url": {
-							"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/pricing/products/{{productId1}}?effective​AccountId={{effectiveAccountId}}",
+							"raw": "{{instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/pricing/products/{{productId1}}?effective​AccountId={{effectiveAccountId}}",
 							"host": [
-								"{{_instanceUrl}}"
+								"{{instanceUrl}}"
 							],
 							"path": [
 								"services",
@@ -2761,9 +2909,9 @@
 							}
 						],
 						"url": {
-							"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/pricing/products?productIds={{_productIds}}&effective​AccountId={{effectiveAccountId}}",
+							"raw": "{{instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/pricing/products?productIds={{_productIds}}&effective​AccountId={{effectiveAccountId}}",
 							"host": [
-								"{{_instanceUrl}}"
+								"{{instanceUrl}}"
 							],
 							"path": [
 								"services",
@@ -2835,9 +2983,9 @@
 							}
 						],
 						"url": {
-							"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/order-management/webstores/{{_webStoreId}}/products/{{productId1}}",
+							"raw": "{{instanceUrl}}/services/data/v{{version}}/commerce/order-management/webstores/{{_webStoreId}}/products/{{productId1}}",
 							"host": [
-								"{{_instanceUrl}}"
+								"{{instanceUrl}}"
 							],
 							"path": [
 								"services",
@@ -2914,9 +3062,9 @@
 									}
 								],
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/query/?q=SELECT+Id,+Name,+Status,+WebStoreId+FROM+WebCart+WHERE+WebStoreId+=+'{{_webStoreId}}'+AND+AccountId+=+'{{effectiveAccountId}}'",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/query/?q=SELECT+Id,+Name,+Status,+WebStoreId+FROM+WebCart+WHERE+WebStoreId+=+'{{_webStoreId}}'+AND+AccountId+=+'{{effectiveAccountId}}'",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -2987,9 +3135,9 @@
 									}
 								],
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/query/?q=SELECT+Id,+Name,+AccountId+FROM+WebCart+WHERE+WebStoreId+=+'{{_webStoreId}}'",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/query/?q=SELECT+Id,+Name,+AccountId+FROM+WebCart+WHERE+WebStoreId+=+'{{_webStoreId}}'",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -3055,9 +3203,9 @@
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/carts/active?effectiveAccountId={{effectiveAccountId}}",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/carts/active?effectiveAccountId={{effectiveAccountId}}",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -3120,9 +3268,9 @@
 									}
 								],
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/carts/{{_cartId}}?effectiveAccountId={{effectiveAccountId}}",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/carts/{{_cartId}}?effectiveAccountId={{effectiveAccountId}}",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -3186,9 +3334,9 @@
 									}
 								],
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/carts/active?effectiveAccountId={{effectiveAccountId}}",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/carts/active?effectiveAccountId={{effectiveAccountId}}",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -3247,9 +3395,9 @@
 									}
 								],
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/carts/{{_cartId}}?effectiveAccountId={{effectiveAccountId}}",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/carts/{{_cartId}}?effectiveAccountId={{effectiveAccountId}}",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -3327,9 +3475,9 @@
 									}
 								},
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/carts",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/carts",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -3406,9 +3554,9 @@
 									}
 								},
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/carts/{{_cartId}}/cart-items?effectiveAccountId={{effectiveAccountId}}",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/carts/{{_cartId}}/cart-items?effectiveAccountId={{effectiveAccountId}}",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -3488,9 +3636,9 @@
 									}
 								},
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/carts/{{_cartId}}/cart-items/batch?effectiveAccountId={{effectiveAccountId}}&currencyIsoCode={{currencyIsoCode}}",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/carts/{{_cartId}}/cart-items/batch?effectiveAccountId={{effectiveAccountId}}&currencyIsoCode={{currencyIsoCode}}",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -3571,9 +3719,9 @@
 									}
 								],
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/carts/{{_cartId}}/cart-items?effectiveAccountId={{effectiveAccountId}}",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/carts/{{_cartId}}/cart-items?effectiveAccountId={{effectiveAccountId}}",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -3631,9 +3779,9 @@
 									}
 								],
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/carts/{{_cartId}}/cart-items/{{_cartItemId}}?effectiveAccountId={{effectiveAccountId}}",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/carts/{{_cartId}}/cart-items/{{_cartItemId}}?effectiveAccountId={{effectiveAccountId}}",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -3696,9 +3844,9 @@
 									"raw": "{\n    \"quantity\": \"5\"\n}"
 								},
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/carts/{{_cartId}}/cart-items/{{_cartItemId}}?effectiveAccountId={{effectiveAccountId}}&currencyIsoCode={{currencyIsoCode}}",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/carts/{{_cartId}}/cart-items/{{_cartItemId}}?effectiveAccountId={{effectiveAccountId}}&currencyIsoCode={{currencyIsoCode}}",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -3864,9 +4012,9 @@
 									}
 								],
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/query/?q=SELECT+Id,+ExternalReference,+Name,+Type,+DefaultTaxLocaleType+FROM+WebStore+WHERE+Name+=+'{{webStoreName}}'",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/query/?q=SELECT+Id,+ExternalReference,+Name,+Type,+DefaultTaxLocaleType+FROM+WebStore+WHERE+Name+=+'{{webStoreName}}'",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -3998,9 +4146,9 @@
 									}
 								],
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/carts/active?effectiveAccountId={{effectiveAccountId}}",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/carts/active?effectiveAccountId={{effectiveAccountId}}",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -4073,9 +4221,9 @@
 									}
 								},
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/carts",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/carts",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -4147,9 +4295,9 @@
 									}
 								},
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/carts/{{_cartId}}/cart-items/batch?effectiveAccountId={{effectiveAccountId}}&currencyIsoCode={{currencyIsoCode}}",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/carts/{{_cartId}}/cart-items/batch?effectiveAccountId={{effectiveAccountId}}&currencyIsoCode={{currencyIsoCode}}",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -4229,9 +4377,9 @@
 									"raw": "{\n    \"cartId\": \"{{_cartId}}\"\n}"
 								},
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/checkouts",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/checkouts",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -4308,9 +4456,9 @@
 									"raw": "{\n    \"deliveryAddress\": {\n        \"firstName\": \"{{deliveryAddressFirstName}}\",\n        \"lastName\": \"{{deliveryAddressLastName}}\",\n        \"street\": \"{{deliveryAddressStreet}}\",\n        \"city\": \"{{deliveryAddressCity}}\",\n        \"region\": \"{{deliveryAddressRegion}}\",\n        \"postalCode\": \"{{deliveryAddressPostalCode}}\",\n        \"country\": \"{{deliveryAddressCountry}}\"\n    },\n    \"desiredDeliveryDate\": \"{{_desiredDeliveryDate}}\",\n    \"shippingInstructions\": \"{{shippingInstructions}}\"\n}"
 								},
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/checkouts/{{_checkoutId}}",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/checkouts/{{_checkoutId}}",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -4392,9 +4540,9 @@
 									"raw": "{\n    \"cardPaymentMethod\": {\n        \"cardHolderName\": \"{{cardHolderName}}\",\n        \"cardNumber\": \"{{cardNumber}}\",\n        \"expiryMonth\": {{_expiryMonth}},\n        \"expiryYear\": {{_expiryYear}},\n        \"cvv\": {{cardCvv}},\n        \"cardType\": \"{{cardType}}\"\n    }\n}"
 								},
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/payments/token",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/payments/token",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -4471,9 +4619,9 @@
 									"raw": "{\n    \"paymentToken\": \"{{_paymentToken}}\",\n    \"requestType\": \"{{paymentRequestType}}\",\n    \"billingAddress\": {\n        \"name\": \"{{billingAddressFirstName}} {{billingAddressLastName}}\",\n        \"street\": \"{{billingAddressStreet}}\",\n        \"city\": \"{{billingAddressCity}}\",\n        \"region\": \"{{billingAddressRegion}}\",\n        \"postalCode\": \"{{billingAddressPostalCode}}\",\n        \"country\": \"{{billingAddressCountry}}\"\n    }\n}"
 								},
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/checkouts/{{_checkoutId}}/payments",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/checkouts/{{_checkoutId}}/payments",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -4547,9 +4695,9 @@
 									}
 								],
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/checkouts/{{_checkoutId}}/orders",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/checkouts/{{_checkoutId}}/orders",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -4620,9 +4768,9 @@
 							"raw": "{\n    \"cartId\": \"{{_cartId}}\"\n}"
 						},
 						"url": {
-							"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/checkouts",
+							"raw": "{{instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/checkouts",
 							"host": [
-								"{{_instanceUrl}}"
+								"{{instanceUrl}}"
 							],
 							"path": [
 								"services",
@@ -4699,9 +4847,9 @@
 							"raw": "{\n    \"deliveryAddress\": {\n        \"firstName\": \"{{deliveryAddressFirstName}}\",\n        \"lastName\": \"{{deliveryAddressLastName}}\",\n        \"street\": \"{{deliveryAddressStreet}}\",\n        \"city\": \"{{deliveryAddressCity}}\",\n        \"region\": \"{{deliveryAddressRegion}}\",\n        \"postalCode\": \"{{deliveryAddressPostalCode}}\",\n        \"country\": \"{{deliveryAddressCountry}}\"\n    },\n    \"desiredDeliveryDate\": \"{{_desiredDeliveryDate}}\",\n    \"shippingInstructions\": \"{{shippingInstructions}}\"\n}"
 						},
 						"url": {
-							"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/checkouts/{{_checkoutId}}",
+							"raw": "{{instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/checkouts/{{_checkoutId}}",
 							"host": [
-								"{{_instanceUrl}}"
+								"{{instanceUrl}}"
 							],
 							"path": [
 								"services",
@@ -4784,9 +4932,9 @@
 							}
 						],
 						"url": {
-							"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/checkouts/{{_checkoutId}}",
+							"raw": "{{instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/checkouts/{{_checkoutId}}",
 							"host": [
-								"{{_instanceUrl}}"
+								"{{instanceUrl}}"
 							],
 							"path": [
 								"services",
@@ -4863,9 +5011,9 @@
 							"raw": "{\n    \"delivery​MethodId\": \"{{_deliveryMethodId}}\"\n}"
 						},
 						"url": {
-							"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/checkouts/{{_checkoutId}}",
+							"raw": "{{instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/checkouts/{{_checkoutId}}",
 							"host": [
-								"{{_instanceUrl}}"
+								"{{instanceUrl}}"
 							],
 							"path": [
 								"services",
@@ -4925,9 +5073,9 @@
 							}
 						],
 						"url": {
-							"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/checkouts/{{_checkoutId}}",
+							"raw": "{{instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/checkouts/{{_checkoutId}}",
 							"host": [
-								"{{_instanceUrl}}"
+								"{{instanceUrl}}"
 							],
 							"path": [
 								"services",
@@ -5006,9 +5154,9 @@
 							"raw": "{\n    \"cardPaymentMethod\": {\n        \"cardHolderName\": \"{{cardHolderName}}\",\n        \"cardNumber\": \"{{cardNumber}}\",\n        \"expiryMonth\": {{_expiryMonth}},\n        \"expiryYear\": {{_expiryYear}},\n        \"cvv\": {{cardCvv}},\n        \"cardType\": \"{{cardType}}\"\n    }\n}"
 						},
 						"url": {
-							"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/payments/token",
+							"raw": "{{instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/payments/token",
 							"host": [
-								"{{_instanceUrl}}"
+								"{{instanceUrl}}"
 							],
 							"path": [
 								"services",
@@ -5085,9 +5233,9 @@
 							"raw": "{\n    \"paymentToken\": \"{{_paymentToken}}\",\n    \"requestType\": \"{{paymentRequestType}}\",\n    \"billingAddress\": {\n        \"name\": \"{{billingAddressFirstName}} {{billingAddressLastName}}\",\n        \"street\": \"{{billingAddressStreet}}\",\n        \"city\": \"{{billingAddressCity}}\",\n        \"region\": \"{{billingAddressRegion}}\",\n        \"postalCode\": \"{{billingAddressPostalCode}}\",\n        \"country\": \"{{billingAddressCountry}}\"\n    }\n}"
 						},
 						"url": {
-							"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/checkouts/{{_checkoutId}}/payments",
+							"raw": "{{instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/checkouts/{{_checkoutId}}/payments",
 							"host": [
-								"{{_instanceUrl}}"
+								"{{instanceUrl}}"
 							],
 							"path": [
 								"services",
@@ -5161,9 +5309,9 @@
 							}
 						],
 						"url": {
-							"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/checkouts/{{_checkoutId}}/orders",
+							"raw": "{{instanceUrl}}/services/data/v{{version}}/commerce/webstores/{{_webStoreId}}/checkouts/{{_checkoutId}}/orders",
 							"host": [
-								"{{_instanceUrl}}"
+								"{{instanceUrl}}"
 							],
 							"path": [
 								"services",
@@ -5358,9 +5506,9 @@
 							"raw": "{\n    \"allOrNone\": true,\n    \"compositeRequest\": [\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id+FROM+WebStore+WHERE+Name+=+'{{webStoreName}}'+LIMIT+1\",\n            \"referenceId\": \"webStore\"\n        },\n        {\n            \"method\": \"GET\",\n            \"url\": \"/services/data/v{{version}}/query/?q=SELECT+Id,+Name,+UrlPathPrefix+FROM+Site+WHERE+MasterLabel+=+'{{webStoreName}}'+LIMIT+1\",\n            \"referenceId\": \"site\"\n        }\n    ]\n}"
 						},
 						"url": {
-							"raw": "{{_instanceUrl}}/services/data/v{{version}}/composite",
+							"raw": "{{instanceUrl}}/services/data/v{{version}}/composite",
 							"host": [
-								"{{_instanceUrl}}"
+								"{{instanceUrl}}"
 							],
 							"path": [
 								"services",
@@ -6263,9 +6411,9 @@
 									}
 								],
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/management/webstores/{{_webStoreId}}/search/attribute-settings/searchable-fields",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/commerce/management/webstores/{{_webStoreId}}/search/attribute-settings/searchable-fields",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -6328,9 +6476,9 @@
 									"raw": "{\n    \"searchableAttributeSettings\": [\n        {\n            \"nameOrId\": \"Description\",\n            \"type\": \"Standard\",\n            \"isSearchable\": true\n        },\n        {\n            \"nameOrId\": \"Name\",\n            \"type\": \"Standard\",\n            \"isSearchable\": true\n        },\n        {\n            \"nameOrId\": \"StockKeepingUnit\",\n            \"type\": \"Standard\",\n            \"isSearchable\": true\n        },\n        {\n            \"nameOrId\": \"Name\",\n            \"type\": \"ProductCategory\",\n            \"isSearchable\": true\n        },\n        {\n            \"nameOrId\": \"Color__c\",\n            \"type\": \"ProductAttribute\",\n            \"isSearchable\": false\n        },\n        {\n            \"nameOrId\": \"Size__c\",\n            \"type\": \"ProductAttribute\",\n            \"isSearchable\": false\n        },\n        {\n            \"nameOrId\": \"Flavor__c\",\n            \"type\": \"ProductAttribute\",\n            \"isSearchable\": true\n        }\n    ]\n}"
 								},
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/management/webstores/{{_webStoreId}}/search/attribute-settings/searchable-fields",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/commerce/management/webstores/{{_webStoreId}}/search/attribute-settings/searchable-fields",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -6394,9 +6542,9 @@
 									}
 								],
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/management/webstores/{{_webStoreId}}/search/attribute-settings/facetable-fields",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/commerce/management/webstores/{{_webStoreId}}/search/attribute-settings/facetable-fields",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -6459,9 +6607,9 @@
 									"raw": "{\n    \"facetableAttributeSettings\": [\n        {\n            \"displayRank\": 1,\n            \"displayType\": \"CategoryTree\",\n            \"nameOrId\": \"Id\",\n            \"type\": \"ProductCategory\"\n        },\n        {\n            \"displayRank\": 2,\n            \"displayType\": \"MultiSelect\",\n            \"nameOrId\": \"Family\",\n            \"type\": \"Standard\"\n        },\n        {\n            \"displayRank\": 3,\n            \"displayType\": \"MultiSelect\",\n            \"nameOrId\": \"QuantityUnitOfMeasure\",\n            \"type\": \"Standard\"\n        },\n        {\n            \"displayRank\": 4,\n            \"displayType\": \"MultiSelect\",\n            \"nameOrId\": \"Flavor__c\",\n            \"type\": \"ProductAttribute\"\n        }\n    ]\n}"
 								},
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/management/webstores/{{_webStoreId}}/search/attribute-settings/facetable-fields",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/commerce/management/webstores/{{_webStoreId}}/search/attribute-settings/facetable-fields",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -6525,9 +6673,9 @@
 									}
 								],
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/management/webstores/{{_webStoreId}}/search/indexes",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/commerce/management/webstores/{{_webStoreId}}/search/indexes",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -6592,9 +6740,9 @@
 									}
 								],
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/management/webstores/{{_webStoreId}}/search/indexes",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/commerce/management/webstores/{{_webStoreId}}/search/indexes",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -6652,9 +6800,9 @@
 									}
 								],
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/management/webstores/{{_webStoreId}}/search/indexes/{{_searchIndexId}}",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/commerce/management/webstores/{{_webStoreId}}/search/indexes/{{_searchIndexId}}",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -6713,9 +6861,9 @@
 									}
 								],
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/management/webstores/{{_webStoreId}}/search/index-logs?pageSize=50",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/commerce/management/webstores/{{_webStoreId}}/search/index-logs?pageSize=50",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -6802,9 +6950,9 @@
 									}
 								],
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/management/webstores/{{_webStoreId}}/search/product-settings?ids={{_productIds}}",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/commerce/management/webstores/{{_webStoreId}}/search/product-settings?ids={{_productIds}}",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -6881,9 +7029,9 @@
 									"raw": "{\n    \"searchProductSettings\": [\n        {\n            \"id\": \"{{productId1}}\",\n            \"searchable\": true\n        },\n        {\n            \"id\": \"{{productId2}}\",\n            \"searchable\": true\n        },\n        {\n            \"id\": \"{{productId3}}\",\n            \"searchable\": true\n        }\n    ]\n}"
 								},
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/management/webstores/{{_webStoreId}}/search/product-settings",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/commerce/management/webstores/{{_webStoreId}}/search/product-settings",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -6955,9 +7103,9 @@
 									}
 								],
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/management/webstores/{{_webStoreId}}/search/sort-rules",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/commerce/management/webstores/{{_webStoreId}}/search/sort-rules",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -7041,9 +7189,9 @@
 									}
 								],
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/tooling/query?q=SELECT+Id,+TableEnumOrId,+DeveloperName+FROM+CustomField+WHERE+DeveloperName+='Flavor'",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/tooling/query?q=SELECT+Id,+TableEnumOrId,+DeveloperName+FROM+CustomField+WHERE+DeveloperName+='Flavor'",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -7125,9 +7273,9 @@
 									"raw": "{\n    \"sortRules\": [\n        {\n            \"type\": \"Relevancy\",\n            \"sortOrder\": 1,\n            \"direction\": \"Default\"\n        },\n        {\n            \"type\": \"ProductBased\",\n            \"sortStandardField\": \"Name\",\n            \"direction\": \"Ascending\",\n            \"labelSuffix\": \"Ascending\",\n            \"sortOrder\": 2\n        },\n        {\n            \"type\": \"ProductBased\",\n            \"sortStandardField\": \"Name\",\n            \"direction\": \"Descending\",\n            \"labelSuffix\": \"Descending\",\n            \"sortOrder\": 3\n        },\n        {\n            \"type\": \"ProductBased\",\n            \"sortStandardField\": \"StockKeepingUnit\",\n            \"direction\": \"Ascending\",\n            \"labelSuffix\": \"Ascending\",\n            \"sortOrder\": 4\n        },\n        {\n            \"type\": \"ProductBased\",\n            \"sortStandardField\": \"StockKeepingUnit\",\n            \"direction\": \"Descending\",\n            \"labelSuffix\": \"Descending\",\n            \"sortOrder\": 5\n        },\n        {\n            \"type\": \"ProductAttributeBased\",\n            \"customFieldId\": \"{{_sortOrderCustomFieldId}}\",\n            \"direction\": \"Ascending\",\n            \"labelSuffix\": \"Ascending\",\n            \"sortOrder\": 6\n        }\n    ]\n}"
 								},
 								"url": {
-									"raw": "{{_instanceUrl}}/services/data/v{{version}}/commerce/management/webstores/{{_webStoreId}}/search/sort-rules",
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/commerce/management/webstores/{{_webStoreId}}/search/sort-rules",
 									"host": [
-										"{{_instanceUrl}}"
+										"{{instanceUrl}}"
 									],
 									"path": [
 										"services",
@@ -7147,24 +7295,1637 @@
 					]
 				}
 			]
+		},
+		{
+			"name": "Salesforce APIs",
+			"item": [
+				{
+					"name": "Data Cloud Direct APIs",
+					"item": [
+						{
+							"name": "Metadata API",
+							"item": [
+								{
+									"name": "Metadata",
+									"event": [
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true,
+										"disabledSystemHeaders": {}
+									},
+									"request": {
+										"method": "GET",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "https://{{_cdpUrl}}/api/{{cdpVersion}}/metadata/",
+											"protocol": "https",
+											"host": [
+												"{{_cdpUrl}}"
+											],
+											"path": [
+												"api",
+												"{{cdpVersion}}",
+												"metadata",
+												""
+											]
+										},
+										"description": "The Customer 360 Audiences Metadata API response includes metadata about all entities, including Calculated Insights, Engagement, Profile, and other entities, as well as their relationships to other objects.\n\nhttps://developer.salesforce.com/docs/atlas.en-us.c360a_api.meta/c360a_api/c360a_api_metadata_api.htm"
+									},
+									"response": []
+								}
+							],
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								}
+							]
+						},
+						{
+							"name": "Calculated Insights API",
+							"item": [
+								{
+									"name": "Query Calculated Insights",
+									"event": [
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true,
+										"disabledSystemHeaders": {}
+									},
+									"request": {
+										"method": "GET",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "https://{{_cdpUrl}}/api/{{cdpVersion}}/insight/calculated-insights/PurchaseByDate__cio?batchSize=5&dimensions=PurchaseDay__c,CustomerId__c&measures=TotalOrders__c&filters=[CustomerId__c=A003]",
+											"protocol": "https",
+											"host": [
+												"{{_cdpUrl}}"
+											],
+											"path": [
+												"api",
+												"{{cdpVersion}}",
+												"insight",
+												"calculated-insights",
+												"PurchaseByDate__cio"
+											],
+											"query": [
+												{
+													"key": "batchSize",
+													"value": "5"
+												},
+												{
+													"key": "dimensions",
+													"value": "PurchaseDay__c,CustomerId__c"
+												},
+												{
+													"key": "measures",
+													"value": "TotalOrders__c"
+												},
+												{
+													"key": "filters",
+													"value": "[CustomerId__c=A003]"
+												}
+											]
+										},
+										"description": "Returns the list of data model objects, their fields, and category.\n\nhttps://developer.salesforce.com/docs/atlas.en-us.c360a_api.meta/c360a_api/c360a_api_profile_meta.htm"
+									},
+									"response": []
+								},
+								{
+									"name": "Metadata - Individual Calculated Insight",
+									"event": [
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true,
+										"disabledSystemHeaders": {}
+									},
+									"request": {
+										"method": "GET",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "https://{{_cdpUrl}}/api/{{cdpVersion}}/insight/metadata/PurchaseByDate__cio",
+											"protocol": "https",
+											"host": [
+												"{{_cdpUrl}}"
+											],
+											"path": [
+												"api",
+												"{{cdpVersion}}",
+												"insight",
+												"metadata",
+												"PurchaseByDate__cio"
+											]
+										},
+										"description": "The metadata includes the dimension and measure that are part of the calculated insight.\n\nhttps://developer.salesforce.com/docs/atlas.en-us.c360a_api.meta/c360a_api/c360a_api_insights_meta_ci_name.htm"
+									},
+									"response": []
+								},
+								{
+									"name": "Metadata - All Calculated Insights",
+									"event": [
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true,
+										"disabledSystemHeaders": {}
+									},
+									"request": {
+										"method": "GET",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "https://{{_cdpUrl}}/api/{{cdpVersion}}/insight/metadata",
+											"protocol": "https",
+											"host": [
+												"{{_cdpUrl}}"
+											],
+											"path": [
+												"api",
+												"{{cdpVersion}}",
+												"insight",
+												"metadata"
+											]
+										},
+										"description": "Get Salesforce CDP Insight metadata, including Calculated Insight objects, their dimensions and measures.\n\nhttps://developer.salesforce.com/docs/atlas.en-us.chatterapi.meta/chatterapi/connect_resources_insight_metadata.htm"
+									},
+									"response": []
+								}
+							],
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								}
+							]
+						},
+						{
+							"name": "Query API",
+							"item": [
+								{
+									"name": "Query",
+									"event": [
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"protocolProfileBehavior": {
+										"disabledSystemHeaders": {}
+									},
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"sql\" : \"SELECT ssot__DataSourceId__c, ssot__DataSourceObjectId__c, ssot__InternalOrganizationId__c, ssot__PurchaseOrderDate__c, ssot__Id__c, ssot__SoldToCustomerId__c FROM ssot__SalesOrder__dlm WHERE ssot__SoldToCustomerId__c = 'A001' \"\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "https://{{_cdpUrl}}/api/{{cdpVersion}}/query",
+											"protocol": "https",
+											"host": [
+												"{{_cdpUrl}}"
+											],
+											"path": [
+												"api",
+												"{{cdpVersion}}",
+												"query"
+											]
+										},
+										"description": "Use this API to query the Customer 360 Audiences data lake across data model, lake, unified, and linked objects.\n\nhttps://developer.salesforce.com/docs/atlas.en-us.c360a_api.meta/c360a_api/c360a_api_query.htm"
+									},
+									"response": []
+								},
+								{
+									"name": "Query - ECOM ATC",
+									"event": [
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"protocolProfileBehavior": {
+										"disabledSystemHeaders": {}
+									},
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"sql\" : \"SELECT action_id__c, action_type__c, cart_id__c, cdp_sys_PartitionDate__c, cdp_sys_SourceVersion__c, created_date__c, crm_account_id__c, customer_id__c, DataSource__c, DataSourceObject__c, KQ_action_id__c, line_item_id__c, product_id__c, product_name__c, product_price__c, product_quantity__c, product_thumbnail_url__c, session_id__c, site_id__c, visitor_id__c, webstore_id__c FROM {{dataCloudDLO_ecomAddToCart}}\"\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "https://{{_cdpUrl}}/api/{{cdpVersion}}/query",
+											"protocol": "https",
+											"host": [
+												"{{_cdpUrl}}"
+											],
+											"path": [
+												"api",
+												"{{cdpVersion}}",
+												"query"
+											]
+										},
+										"description": "Use this API to query the Customer 360 Audiences data lake across data model, lake, unified, and linked objects.\n\nhttps://developer.salesforce.com/docs/atlas.en-us.c360a_api.meta/c360a_api/c360a_api_query.htm"
+									},
+									"response": []
+								}
+							],
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								}
+							]
+						},
+						{
+							"name": "Ingestion API",
+							"item": [
+								{
+									"name": "Streaming",
+									"item": [
+										{
+											"name": "Insert Records",
+											"request": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n       \"data\": [{\n        \"maid\":123,\n        \"first_name\":\"Sandeep\",\n        \"last_name\":\"Aulakh\",\n        \"email\":\"saulakh@salesforce-nto.com\",\n        \"gender\":\"Male\",\n        \"city\":\"Wilton\",\n        \"state\":\"CT\",\n        \"created\":\"2021-10-22T09:11:11.816319Z\"\n    },\n    {\n        \"maid\":124,\n        \"first_name\":\"Aaron\",\n        \"last_name\":\"Cates\",\n        \"email\":\"acates@salesforce-nto.com\",\n        \"gender\":\"Male\",\n        \"city\":\"San Francisco\",\n        \"state\":\"CA\",\n        \"created\":\"2021-10-22T09:11:11.816319Z\"\n    }\n]}",
+													"options": {
+														"raw": {
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "https://{{_cdpUrl}}/api/{{cdpVersion}}/ingest/sources/Event_API/runner_profiles",
+													"protocol": "https",
+													"host": [
+														"{{_cdpUrl}}"
+													],
+													"path": [
+														"api",
+														"{{cdpVersion}}",
+														"ingest",
+														"sources",
+														"Event_API",
+														"runner_profiles"
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "Delete Records",
+											"request": {
+												"method": "DELETE",
+												"header": [],
+												"url": {
+													"raw": "https://{{_cdpUrl}}/api/{{cdpVersion}}/ingest/sources/Event_API/runner_profiles?ids=101",
+													"protocol": "https",
+													"host": [
+														"{{_cdpUrl}}"
+													],
+													"path": [
+														"api",
+														"{{cdpVersion}}",
+														"ingest",
+														"sources",
+														"Event_API",
+														"runner_profiles"
+													],
+													"query": [
+														{
+															"key": "ids",
+															"value": "101"
+														}
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "Sync Record Validation",
+											"request": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n       \"data\": [{\n        \"maid\":101,\n        \"first_name\":\"Sandeep\",\n        \"last_name\":\"Aulakh\",\n        \"email\":\"saulakh@salesforce-nto.com\",\n        \"gender\":\"Male\",\n        \"city\":\"Wilton\",\n        \"state\":\"CT\",\n        \"created\":\"2021-10-22T09:11:11.816319Z\"\n    },\n    {\n        \"maid\":102,\n        \"first_name\":\"Aaron\",\n        \"last_name\":\"Cates\",\n        \"email\":\"acates@salesforce-nto.com\",\n        \"gender\":\"Male\",\n        \"city\":\"San Francisco\",\n        \"state\":\"CA\",\n        \"created\":\"2021-10-22T09:11:11.816319Z\"\n    }\n]}",
+													"options": {
+														"raw": {
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "https://{{_cdpUrl}}/api/{{cdpVersion}}/ingest/sources/Event_API/runner_profiles/actions/test",
+													"protocol": "https",
+													"host": [
+														"{{_cdpUrl}}"
+													],
+													"path": [
+														"api",
+														"{{cdpVersion}}",
+														"ingest",
+														"sources",
+														"Event_API",
+														"runner_profiles",
+														"actions",
+														"test"
+													]
+												}
+											},
+											"response": []
+										}
+									],
+									"event": [
+										{
+											"listen": "prerequest",
+											"script": {
+												"type": "text/javascript",
+												"exec": [
+													""
+												]
+											}
+										},
+										{
+											"listen": "test",
+											"script": {
+												"type": "text/javascript",
+												"exec": [
+													""
+												]
+											}
+										}
+									]
+								},
+								{
+									"name": "Bulk",
+									"item": [
+										{
+											"name": "Create Job",
+											"event": [
+												{
+													"listen": "prerequest",
+													"script": {
+														"exec": [
+															""
+														],
+														"type": "text/javascript"
+													}
+												}
+											],
+											"request": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n   \"object\":\"runner_profiles\",\n   \"sourceName\":\"Event_API\",\n   \"operation\":\"upsert\"\n}",
+													"options": {
+														"raw": {
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "https://{{_cdpUrl}}/api/{{cdpVersion}}/ingest/jobs",
+													"protocol": "https",
+													"host": [
+														"{{_cdpUrl}}"
+													],
+													"path": [
+														"api",
+														"{{cdpVersion}}",
+														"ingest",
+														"jobs"
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "Upload Job",
+											"event": [
+												{
+													"listen": "prerequest",
+													"script": {
+														"exec": [
+															""
+														],
+														"type": "text/javascript"
+													}
+												}
+											],
+											"protocolProfileBehavior": {
+												"disabledSystemHeaders": {}
+											},
+											"request": {
+												"method": "PUT",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "text/csv"
+													},
+													{
+														"key": "Content-Length",
+														"value": "0",
+														"disabled": true
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "maid,first_name,last_name,email,gender,city,state,created\n201,Sandeep_csv,Aulakh_csv,saulakh+ntodemo.com,M,NYC,NY,2021-10-22T09:11:11.816319Z\n201,Sandeep_csv1,Aulakh_csv1,saulakh+ntodemo.com,M,NYC,NY,2021-11-22T09:11:11.816319Z\n",
+													"options": {
+														"raw": {
+															"language": "text"
+														}
+													}
+												},
+												"url": {
+													"raw": "https://{{_cdpUrl}}/api/{{cdpVersion}}/ingest/jobs/fcf98ed6-d514-4923-8369-486f7dad4359/batches",
+													"protocol": "https",
+													"host": [
+														"{{_cdpUrl}}"
+													],
+													"path": [
+														"api",
+														"{{cdpVersion}}",
+														"ingest",
+														"jobs",
+														"fcf98ed6-d514-4923-8369-486f7dad4359",
+														"batches"
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "Close Job",
+											"event": [
+												{
+													"listen": "prerequest",
+													"script": {
+														"exec": [
+															""
+														],
+														"type": "text/javascript"
+													}
+												}
+											],
+											"request": {
+												"method": "PATCH",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n   \"state\" : \"UploadComplete\"\n}",
+													"options": {
+														"raw": {
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "https://{{_cdpUrl}}/api/{{cdpVersion}}/ingest/jobs/78f56f55-c00a-4e20-ab7d-03307a319ff2",
+													"protocol": "https",
+													"host": [
+														"{{_cdpUrl}}"
+													],
+													"path": [
+														"api",
+														"{{cdpVersion}}",
+														"ingest",
+														"jobs",
+														"78f56f55-c00a-4e20-ab7d-03307a319ff2"
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "Abort Job",
+											"event": [
+												{
+													"listen": "prerequest",
+													"script": {
+														"exec": [
+															""
+														],
+														"type": "text/javascript"
+													}
+												}
+											],
+											"request": {
+												"method": "PATCH",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n   \"state\" : \"Aborted\"\n}",
+													"options": {
+														"raw": {
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "https://{{_cdpUrl}}/api/{{cdpVersion}}/ingest/jobs/e70934e8-2877-4660-872b-f3d9be4b9ad7",
+													"protocol": "https",
+													"host": [
+														"{{_cdpUrl}}"
+													],
+													"path": [
+														"api",
+														"{{cdpVersion}}",
+														"ingest",
+														"jobs",
+														"e70934e8-2877-4660-872b-f3d9be4b9ad7"
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "Delete Job",
+											"event": [
+												{
+													"listen": "prerequest",
+													"script": {
+														"exec": [
+															""
+														],
+														"type": "text/javascript"
+													}
+												}
+											],
+											"request": {
+												"method": "DELETE",
+												"header": [],
+												"url": {
+													"raw": "https://{{_cdpUrl}}/api/{{cdpVersion}}/ingest/jobs/78f56f55-c00a-4e20-ab7d-03307a319ff2",
+													"protocol": "https",
+													"host": [
+														"{{_cdpUrl}}"
+													],
+													"path": [
+														"api",
+														"{{cdpVersion}}",
+														"ingest",
+														"jobs",
+														"78f56f55-c00a-4e20-ab7d-03307a319ff2"
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "Get Job Info",
+											"event": [
+												{
+													"listen": "prerequest",
+													"script": {
+														"exec": [
+															""
+														],
+														"type": "text/javascript"
+													}
+												}
+											],
+											"request": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "https://{{_cdpUrl}}/api/{{cdpVersion}}/ingest/jobs/78f56f55-c00a-4e20-ab7d-03307a319ff2",
+													"protocol": "https",
+													"host": [
+														"{{_cdpUrl}}"
+													],
+													"path": [
+														"api",
+														"{{cdpVersion}}",
+														"ingest",
+														"jobs",
+														"78f56f55-c00a-4e20-ab7d-03307a319ff2"
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "Get All Jobs",
+											"event": [
+												{
+													"listen": "prerequest",
+													"script": {
+														"exec": [
+															""
+														],
+														"type": "text/javascript"
+													}
+												}
+											],
+											"request": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "https://{{_cdpUrl}}/api/{{cdpVersion}}/ingest/jobs?limit=50&offset=&orderby=&state=",
+													"protocol": "https",
+													"host": [
+														"{{_cdpUrl}}"
+													],
+													"path": [
+														"api",
+														"{{cdpVersion}}",
+														"ingest",
+														"jobs"
+													],
+													"query": [
+														{
+															"key": "limit",
+															"value": "50"
+														},
+														{
+															"key": "offset",
+															"value": ""
+														},
+														{
+															"key": "orderby",
+															"value": ""
+														},
+														{
+															"key": "state",
+															"value": ""
+														}
+													]
+												}
+											},
+											"response": []
+										}
+									]
+								}
+							],
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								}
+							]
+						},
+						{
+							"name": "Profile API",
+							"item": [
+								{
+									"name": "Metadata",
+									"event": [
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true,
+										"disabledSystemHeaders": {}
+									},
+									"request": {
+										"method": "GET",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "https://{{_cdpUrl}}/api/{{cdpVersion}}/profile/metadata",
+											"protocol": "https",
+											"host": [
+												"{{_cdpUrl}}"
+											],
+											"path": [
+												"api",
+												"{{cdpVersion}}",
+												"profile",
+												"metadata"
+											]
+										},
+										"description": "The metadata includes the dimension and measure that are part of the calculated insight.\n\n\nhttps://developer.salesforce.com/docs/atlas.en-us.c360a_api.meta/c360a_api/c360a_api_insights_meta_ci_name.htm"
+									},
+									"response": []
+								},
+								{
+									"name": "Metadata - DMO",
+									"event": [
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true,
+										"disabledSystemHeaders": {}
+									},
+									"request": {
+										"method": "GET",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "https://{{_cdpUrl}}/api/{{cdpVersion}}/profile/metadata/ssot__Individual__dlm",
+											"protocol": "https",
+											"host": [
+												"{{_cdpUrl}}"
+											],
+											"path": [
+												"api",
+												"{{cdpVersion}}",
+												"profile",
+												"metadata",
+												"ssot__Individual__dlm"
+											]
+										},
+										"description": "Returns the metadata for the data model object. Metadata includes the list of fields, data types and indexes available for lookup.\n\nhttps://developer.salesforce.com/docs/atlas.en-us.c360a_api.meta/c360a_api/c360a_api_profile_meta_dmname.htm"
+									},
+									"response": []
+								},
+								{
+									"name": "DMO",
+									"event": [
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true,
+										"disabledSystemHeaders": {}
+									},
+									"request": {
+										"method": "GET",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "https://{{_cdpUrl}}/api/{{cdpVersion}}/profile/ssot__Individual__dlm?fields=ssot__Id__c,ssot__FirstName__c,ssot__LastName__c,ssot__DataSourceId__c&limit=100&filters=[ssot__DataSourceId__c=POS]",
+											"protocol": "https",
+											"host": [
+												"{{_cdpUrl}}"
+											],
+											"path": [
+												"api",
+												"{{cdpVersion}}",
+												"profile",
+												"ssot__Individual__dlm"
+											],
+											"query": [
+												{
+													"key": "fields",
+													"value": "ssot__Id__c,ssot__FirstName__c,ssot__LastName__c,ssot__DataSourceId__c"
+												},
+												{
+													"key": "limit",
+													"value": "100"
+												},
+												{
+													"key": "filters",
+													"value": "[ssot__DataSourceId__c=POS]"
+												}
+											]
+										},
+										"description": "Returns data model objects based on search filters. Use this API call to retrieve the object records after applying the selected filter(s).\n\nhttps://developer.salesforce.com/docs/atlas.en-us.c360a_api.meta/c360a_api/c360a_api_profile_dmname.htm"
+									},
+									"response": []
+								},
+								{
+									"name": "DMO - By ID",
+									"event": [
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true,
+										"disabledSystemHeaders": {}
+									},
+									"request": {
+										"method": "GET",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "https://{{_cdpUrl}}/api/{{cdpVersion}}/profile/ssot__Individual__dlm/A031?fields=ssot__Id__c,ssot__FirstName__c,ssot__LastName__c,ssot__DataSourceId__c&limit=100&filters=[ssot__DataSourceId__c=POS]",
+											"protocol": "https",
+											"host": [
+												"{{_cdpUrl}}"
+											],
+											"path": [
+												"api",
+												"{{cdpVersion}}",
+												"profile",
+												"ssot__Individual__dlm",
+												"A031"
+											],
+											"query": [
+												{
+													"key": "fields",
+													"value": "ssot__Id__c,ssot__FirstName__c,ssot__LastName__c,ssot__DataSourceId__c"
+												},
+												{
+													"key": "limit",
+													"value": "100"
+												},
+												{
+													"key": "filters",
+													"value": "[ssot__DataSourceId__c=POS]"
+												}
+											]
+										},
+										"description": "Returns data model objects based on search indexes and filters. Use this API call to retrieve the object record based on the primary key or secondary keys. Returns an empty list when records are not found.\n\n\nhttps://developer.salesforce.com/docs/atlas.en-us.c360a_api.meta/c360a_api/c360a_api_profile_dmname_id.htm"
+									},
+									"response": []
+								},
+								{
+									"name": "DMO - By Search Key",
+									"event": [
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true,
+										"disabledSystemHeaders": {}
+									},
+									"request": {
+										"method": "GET",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "https://{{_cdpUrl}}/api/{{cdpVersion}}/profile/ssot__Individual__dlm/POS?searchKey=ssot__DataSourceId__c&fields=ssot__Id__c,ssot__FirstName__c,ssot__LastName__c,ssot__DataSourceId__c&limit=100&filters=[ssot__FirstName__c=Meghan]",
+											"protocol": "https",
+											"host": [
+												"{{_cdpUrl}}"
+											],
+											"path": [
+												"api",
+												"{{cdpVersion}}",
+												"profile",
+												"ssot__Individual__dlm",
+												"POS"
+											],
+											"query": [
+												{
+													"key": "searchKey",
+													"value": "ssot__DataSourceId__c"
+												},
+												{
+													"key": "fields",
+													"value": "ssot__Id__c,ssot__FirstName__c,ssot__LastName__c,ssot__DataSourceId__c"
+												},
+												{
+													"key": "limit",
+													"value": "100"
+												},
+												{
+													"key": "filters",
+													"value": "[ssot__FirstName__c=Meghan]"
+												}
+											]
+										},
+										"description": "Returns data model objects based on search indexes and filters. Use this API call to retrieve the object record based on the primary key or secondary keys. Returns an empty list when records are not found.\n\n\nhttps://developer.salesforce.com/docs/atlas.en-us.c360a_api.meta/c360a_api/c360a_api_profile_dmname_id.htm"
+									},
+									"response": []
+								},
+								{
+									"name": "DMO and Children - By ID",
+									"event": [
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true,
+										"disabledSystemHeaders": {}
+									},
+									"request": {
+										"method": "GET",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "https://{{_cdpUrl}}/api/{{cdpVersion}}/profile/UnifiedIndividual__dlm/1e0403e9-7a82-3a5a-90f7-00c92ef8d5b2/UnifiedContactPointEmail__dlm?fields=ssot__PartyId__c,ssot__EmailAddress__c&limit=10",
+											"protocol": "https",
+											"host": [
+												"{{_cdpUrl}}"
+											],
+											"path": [
+												"api",
+												"{{cdpVersion}}",
+												"profile",
+												"UnifiedIndividual__dlm",
+												"1e0403e9-7a82-3a5a-90f7-00c92ef8d5b2",
+												"UnifiedContactPointEmail__dlm"
+											],
+											"query": [
+												{
+													"key": "fields",
+													"value": "ssot__PartyId__c,ssot__EmailAddress__c"
+												},
+												{
+													"key": "limit",
+													"value": "10"
+												}
+											]
+										},
+										"description": "Returns data model objects and child objects based on indexes and search filters.\n\n\nhttps://developer.salesforce.com/docs/atlas.en-us.c360a_api.meta/c360a_api/c360a_api_profile_dmname_id_child_dmname.htm"
+									},
+									"response": []
+								},
+								{
+									"name": "DMO and Children - By Search Key",
+									"event": [
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true,
+										"disabledSystemHeaders": {}
+									},
+									"request": {
+										"method": "GET",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "https://{{_cdpUrl}}/api/{{cdpVersion}}/profile/UnifiedIndividual__dlm/Rice/UnifiedContactPointEmail__dlm?searchKey=ssot__LastName__c&fields=ssot__PartyId__c,ssot__EmailAddress__c&limit=10",
+											"protocol": "https",
+											"host": [
+												"{{_cdpUrl}}"
+											],
+											"path": [
+												"api",
+												"{{cdpVersion}}",
+												"profile",
+												"UnifiedIndividual__dlm",
+												"Rice",
+												"UnifiedContactPointEmail__dlm"
+											],
+											"query": [
+												{
+													"key": "searchKey",
+													"value": "ssot__LastName__c"
+												},
+												{
+													"key": "fields",
+													"value": "ssot__PartyId__c,ssot__EmailAddress__c"
+												},
+												{
+													"key": "limit",
+													"value": "10"
+												}
+											]
+										},
+										"description": "Returns data model objects and child objects based on indexes and search filters.\n\n\nhttps://developer.salesforce.com/docs/atlas.en-us.c360a_api.meta/c360a_api/c360a_api_profile_dmname_id_child_dmname.htm"
+									},
+									"response": []
+								},
+								{
+									"name": "DMO and Calculated Insight - By ID",
+									"event": [
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true,
+										"disabledSystemHeaders": {}
+									},
+									"request": {
+										"method": "GET",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "https://{{_cdpUrl}}/api/{{cdpVersion}}/profile/ssot__Individual__dlm/A001/calculated-insights/PurchaseByDate__cio?batchSize=5&dimensions=PurchaseDay__c,CustomerId__c&measures=TotalOrders__c&filters=[ssot__DataSourceId__c=POS]",
+											"protocol": "https",
+											"host": [
+												"{{_cdpUrl}}"
+											],
+											"path": [
+												"api",
+												"{{cdpVersion}}",
+												"profile",
+												"ssot__Individual__dlm",
+												"A001",
+												"calculated-insights",
+												"PurchaseByDate__cio"
+											],
+											"query": [
+												{
+													"key": "batchSize",
+													"value": "5"
+												},
+												{
+													"key": "dimensions",
+													"value": "PurchaseDay__c,CustomerId__c"
+												},
+												{
+													"key": "measures",
+													"value": "TotalOrders__c"
+												},
+												{
+													"key": "filters",
+													"value": "[ssot__DataSourceId__c=POS]"
+												}
+											]
+										},
+										"description": "Returns data model objects and a computed view based on indexes and search filters.\n\n\nhttps://developer.salesforce.com/docs/atlas.en-us.c360a_api.meta/c360a_api/c360a_api_profile_dmname_id_ci_ci_name.htm"
+									},
+									"response": []
+								}
+							],
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											""
+										]
+									}
+								}
+							]
+						}
+					],
+					"description": "The Salesforce CDP allows you to perform some of the Salesforce CDP application tasks programmatically via a [Direct API](https://developer.salesforce.com/docs/atlas.en-us.c360a_api.meta/c360a_api/c360a_api_quick_start.htm) to the underlying data store. \n\nThis is the preferred approach to API connections however if you need access to the APIs in things such as flow, we support access via the Salesforce Connect APIs.",
+					"auth": {
+						"type": "bearer",
+						"bearer": [
+							{
+								"key": "token",
+								"value": "{{_cdpToken}}",
+								"type": "string"
+							}
+						]
+					},
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									""
+								]
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									""
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Metadata Service",
+					"item": [
+						{
+							"name": "listMetadata : custom object",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "text/xml; charset=utf-8"
+									},
+									{
+										"key": "SOAPAction",
+										"value": "login",
+										"type": "text"
+									},
+									{
+										"key": "charset",
+										"value": "UTF-8",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:tns=\"http://soap.sforce.com/2006/04/metadata\">\n    <soapenv:Header>\n        <tns:SessionHeader>\n            <tns:sessionId>{{_accessToken}}</tns:sessionId>\n        </tns:SessionHeader>\n    </soapenv:Header>\n    <soapenv:Body>\n        <tns:listMetadata>\n            <listMetadataQuery>\n                <type>CustomObject</type>\n                <folder></folder>\n            </listMetadataQuery>\n            <asOfVersion>{{version}}</asOfVersion>\n        </tns:listMetadata>\n    </soapenv:Body>\n</soapenv:Envelope>",
+									"options": {
+										"raw": {
+											"language": "xml"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{instanceUrl}}/services/Soap/m/{{version}}",
+									"host": [
+										"{{instanceUrl}}"
+									],
+									"path": [
+										"services",
+										"Soap",
+										"m",
+										"{{version}}"
+									]
+								},
+								"description": "Lists the available metadata components."
+							},
+							"response": []
+						},
+						{
+							"name": "listMetadata : profile",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "text/xml; charset=utf-8"
+									},
+									{
+										"key": "SOAPAction",
+										"value": "login",
+										"type": "text"
+									},
+									{
+										"key": "charset",
+										"value": "UTF-8",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:tns=\"http://soap.sforce.com/2006/04/metadata\">\n    <soapenv:Header>\n        <tns:SessionHeader>\n            <tns:sessionId>{{_accessToken}}</tns:sessionId>\n        </tns:SessionHeader>\n    </soapenv:Header>\n    <soapenv:Body>\n        <tns:listMetadata>\n            <listMetadataQuery>\n                <type>Profile</type>\n                <folder></folder>\n            </listMetadataQuery>\n            <asOfVersion>{{version}}</asOfVersion>\n        </tns:listMetadata>\n    </soapenv:Body>\n</soapenv:Envelope>",
+									"options": {
+										"raw": {
+											"language": "xml"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{instanceUrl}}/services/Soap/m/{{version}}",
+									"host": [
+										"{{instanceUrl}}"
+									],
+									"path": [
+										"services",
+										"Soap",
+										"m",
+										"{{version}}"
+									]
+								},
+								"description": "Lists the available metadata components."
+							},
+							"response": []
+						},
+						{
+							"name": "listMetadata : permission set",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "text/xml; charset=utf-8"
+									},
+									{
+										"key": "SOAPAction",
+										"value": "login",
+										"type": "text"
+									},
+									{
+										"key": "charset",
+										"value": "UTF-8",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:tns=\"http://soap.sforce.com/2006/04/metadata\">\n    <soapenv:Header>\n        <tns:SessionHeader>\n            <tns:sessionId>{{_accessToken}}</tns:sessionId>\n        </tns:SessionHeader>\n    </soapenv:Header>\n    <soapenv:Body>\n        <tns:listMetadata>\n            <listMetadataQuery>\n                <type>PermissionSet</type>\n                <folder></folder>\n            </listMetadataQuery>\n            <asOfVersion>{{version}}</asOfVersion>\n        </tns:listMetadata>\n    </soapenv:Body>\n</soapenv:Envelope>",
+									"options": {
+										"raw": {
+											"language": "xml"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{instanceUrl}}/services/Soap/m/{{version}}",
+									"host": [
+										"{{instanceUrl}}"
+									],
+									"path": [
+										"services",
+										"Soap",
+										"m",
+										"{{version}}"
+									]
+								},
+								"description": "Lists the available metadata components."
+							},
+							"response": []
+						},
+						{
+							"name": "readMetadata : profile",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "text/xml; charset=utf-8"
+									},
+									{
+										"key": "SOAPAction",
+										"value": "login",
+										"type": "text"
+									},
+									{
+										"key": "charset",
+										"value": "UTF-8",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:tns=\"http://soap.sforce.com/2006/04/metadata\">\n    <soapenv:Header>\n        <tns:SessionHeader>\n            <tns:sessionId>{{_accessToken}}</tns:sessionId>\n        </tns:SessionHeader>\n    </soapenv:Header>\n    <soapenv:Body>\n        <tns:readMetadata>\n            <type>Profile</type>\n            <fullNames>Buyer Profile</fullNames>\n            <fullNames>Shopper Profile</fullNames>\n        </tns:readMetadata>\n    </soapenv:Body>\n</soapenv:Envelope>",
+									"options": {
+										"raw": {
+											"language": "xml"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{instanceUrl}}/services/Soap/m/{{version}}",
+									"host": [
+										"{{instanceUrl}}"
+									],
+									"path": [
+										"services",
+										"Soap",
+										"m",
+										"{{version}}"
+									]
+								},
+								"description": "Reads metadata entries synchronously."
+							},
+							"response": []
+						},
+						{
+							"name": "readMetadata : permission set",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "text/xml; charset=utf-8"
+									},
+									{
+										"key": "SOAPAction",
+										"value": "login",
+										"type": "text"
+									},
+									{
+										"key": "charset",
+										"value": "UTF-8",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:tns=\"http://soap.sforce.com/2006/04/metadata\">\n    <soapenv:Header>\n        <tns:SessionHeader>\n            <tns:sessionId>{{_accessToken}}</tns:sessionId>\n        </tns:SessionHeader>\n    </soapenv:Header>\n    <soapenv:Body>\n        <tns:readMetadata>\n            <type>PermissionSet</type>\n            <fullNames>External_User_Admin</fullNames>\n        </tns:readMetadata>\n    </soapenv:Body>\n</soapenv:Envelope>",
+									"options": {
+										"raw": {
+											"language": "xml"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{instanceUrl}}/services/Soap/m/{{version}}",
+									"host": [
+										"{{instanceUrl}}"
+									],
+									"path": [
+										"services",
+										"Soap",
+										"m",
+										"{{version}}"
+									]
+								},
+								"description": "Reads metadata entries synchronously."
+							},
+							"response": []
+						}
+					]
+				}
+			]
 		}
 	],
-	"variable": [
+	"event": [
 		{
-			"key": "_accessToken",
-			"value": ""
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
 		},
 		{
-			"key": "_instanceUrl",
-			"value": ""
-		},
-		{
-			"key": "_userId",
-			"value": ""
-		},
-		{
-			"key": "orgId",
-			"value": ""
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
 		}
 	]
 }
