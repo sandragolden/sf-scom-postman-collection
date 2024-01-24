@@ -7634,7 +7634,7 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n    \"sql\" : \"SELECT action_id__c, action_type__c, cart_id__c, cdp_sys_PartitionDate__c, cdp_sys_SourceVersion__c, created_date__c, crm_account_id__c, customer_id__c, DataSource__c, DataSourceObject__c, KQ_action_id__c, line_item_id__c, product_id__c, product_name__c, product_price__c, product_quantity__c, product_thumbnail_url__c, session_id__c, site_id__c, visitor_id__c, webstore_id__c FROM {{dataCloudDLO_ecomAddToCart}}\"\n}",
+											"raw": "{\n    \"sql\" : \"SELECT action_id__c, action_type__c, cart_id__c, cdp_sys_PartitionDate__c, cdp_sys_SourceVersion__c, created_date__c, crm_account_id__c, customer_id__c, DataSource__c, DataSourceObject__c, KQ_action_id__c, line_item_id__c, product_id__c, product_name__c, product_price__c, product_quantity__c, product_thumbnail_url__c, session_id__c, site_id__c, visitor_id__c, webstore_id__c FROM {{dataCloudDLO_ecomAddToCart}} ORDER BY created_date__c DESC\"\n}",
 											"options": {
 												"raw": {
 													"language": "json"
@@ -7723,6 +7723,64 @@
 											"response": []
 										},
 										{
+											"name": "Insert Records (ECOM ATC)",
+											"event": [
+												{
+													"listen": "prerequest",
+													"script": {
+														"exec": [
+															"function uuidv4() {",
+															"    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {",
+															"        let r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);",
+															"        return v.toString(16);",
+															"    });",
+															"}",
+															"",
+															"const context = pm.environment.name ? pm.environment : pm.collectionVariables;",
+															"const date = new Date();",
+															"context.set('_actionId', uuidv4());",
+															"context.set('_createdDate', date.toISOString());"
+														],
+														"type": "text/javascript"
+													}
+												}
+											],
+											"request": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n    \"data\": [\n        {\n            \"action_id\": \"{{_actionId}}\",\n            \"created_date\": \"{{_createdDate}}\",\n            \"action_type\": \"add_to_cart\",\n            \"line_item_id\": \"1fc17488c825e72a6a3698adb0\",\n            \"product_id\": \"1020171A5VAD4\",\n            \"product_name\": \"Men's Short-sleeve Horizon Polo\",\n            \"product_price\": \"45.00\",\n            \"product_quantity\": 1,\n            \"product_thumbnail_url\": \"https://www.northerntrailoutfitters.com/on/demandware.static/-/Sites-nto-apparel/default/dw8418c832/images/hi-res/1020171A5V-0.jpg\",\n            \"webstore_id\": \"a1ae3b4f4526e27e76c05c40b8\"\n        }\n    ]\n}",
+													"options": {
+														"raw": {
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "https://{{_cdpUrl}}/api/{{cdpVersion}}/ingest/sources/ecom/add_to_cart",
+													"protocol": "https",
+													"host": [
+														"{{_cdpUrl}}"
+													],
+													"path": [
+														"api",
+														"{{cdpVersion}}",
+														"ingest",
+														"sources",
+														"ecom",
+														"add_to_cart"
+													]
+												}
+											},
+											"response": []
+										},
+										{
 											"name": "Delete Records",
 											"request": {
 												"method": "DELETE",
@@ -7745,6 +7803,35 @@
 														{
 															"key": "ids",
 															"value": "101"
+														}
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "Delete Records (ECOM ATC)",
+											"request": {
+												"method": "DELETE",
+												"header": [],
+												"url": {
+													"raw": "https://{{_cdpUrl}}/api/{{cdpVersion}}/ingest/sources/ecom/add_to_cart?ids=44727e57-2ba2-47e9-a3ff-a7feba623216",
+													"protocol": "https",
+													"host": [
+														"{{_cdpUrl}}"
+													],
+													"path": [
+														"api",
+														"{{cdpVersion}}",
+														"ingest",
+														"sources",
+														"ecom",
+														"add_to_cart"
+													],
+													"query": [
+														{
+															"key": "ids",
+															"value": "44727e57-2ba2-47e9-a3ff-a7feba623216"
 														}
 													]
 												}
@@ -7783,6 +7870,66 @@
 														"sources",
 														"Event_API",
 														"runner_profiles",
+														"actions",
+														"test"
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "Sync Record Validation (ECOM ATC)",
+											"event": [
+												{
+													"listen": "prerequest",
+													"script": {
+														"exec": [
+															"function uuidv4() {",
+															"    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {",
+															"        let r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);",
+															"        return v.toString(16);",
+															"    });",
+															"}",
+															"",
+															"const context = pm.environment.name ? pm.environment : pm.collectionVariables;",
+															"const date = new Date();",
+															"context.set('_actionId', uuidv4());",
+															"context.set('_createdDate', date.toISOString());"
+														],
+														"type": "text/javascript"
+													}
+												}
+											],
+											"request": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n    \"data\": [\n        {\n            \"action_id\": \"{{_actionId}}\",\n            \"created_date\": \"{{_createdDate}}\",\n            \"action_type\": \"add_to_cart\",\n            \"line_item_id\": \"1fc17488c825e72a6a3698adb0\",\n            \"product_id\": \"1020171A5VAD4\",\n            \"product_name\": \"Men's Short-sleeve Horizon Polo\",\n            \"product_price\": \"45.00\",\n            \"product_quantity\": 1,\n            \"product_thumbnail_url\": \"https://www.northerntrailoutfitters.com/on/demandware.static/-/Sites-nto-apparel/default/dw8418c832/images/hi-res/1020171A5V-0.jpg\",\n            \"webstore_id\": \"a1ae3b4f4526e27e76c05c40b8\"\n        }\n    ]\n}",
+													"options": {
+														"raw": {
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "https://{{_cdpUrl}}/api/{{cdpVersion}}/ingest/sources/ecom/add_to_cart/actions/test",
+													"protocol": "https",
+													"host": [
+														"{{_cdpUrl}}"
+													],
+													"path": [
+														"api",
+														"{{cdpVersion}}",
+														"ingest",
+														"sources",
+														"ecom",
+														"add_to_cart",
 														"actions",
 														"test"
 													]
