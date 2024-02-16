@@ -8823,6 +8823,172 @@
 					]
 				},
 				{
+					"name": "EGPT Connect API",
+					"item": [
+						{
+							"name": "Prompt Generations - OpenAI",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"promptTextorId\": \"What can you say about the ChatGPT Promptbook?\",\n    \"provider\": \"OpenAI\",\n    \"additionalConfig\": {\n        \"applicationName\": \"{{egptApplicationName}}\",\n        \"maxTokens\": 2048\n    }\n}"
+								},
+								"url": {
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/einstein/llm/prompt/generations",
+									"host": [
+										"{{instanceUrl}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"einstein",
+										"llm",
+										"prompt",
+										"generations"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Prompt Generations - OpenAI gpt-4",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"promptTextorId\": \"Can you provide me with some ideas for blog posts about unsubscribing from emails?\",\n    \"provider\": \"OpenAI\",\n    \"additionalConfig\": {\n        \"applicationName\": \"{{egptApplicationName}}\",\n        \"model\": \"gpt-4\",\n        \"maxTokens\": 2048\n    }\n}"
+								},
+								"url": {
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/einstein/llm/prompt/generations",
+									"host": [
+										"{{instanceUrl}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"einstein",
+										"llm",
+										"prompt",
+										"generations"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Prompt Generations - Cohere",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"promptTextorId\": \"Can you provide me with some ideas for blog posts about unsubscribing from emails?\",\n    \"provider\": \"Cohere\",\n    \"additionalConfig\": {\n        \"applicationName\": \"{{egptApplicationName}}\",\n        \"maxTokens\": 2048\n    }\n}"
+								},
+								"url": {
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/einstein/llm/prompt/generations",
+									"host": [
+										"{{instanceUrl}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"einstein",
+										"llm",
+										"prompt",
+										"generations"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Prompt Embeddings - Open AI",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"prompts\": {\n        \"wrappedListString\": [\n            \"Can you provide me with some ideas for blog posts about unsubscribing from emails?\"\n        ]\n    },\n    \"additionalConfig\": {\n        \"applicationName\": \"{{egptApplicationName}}\"\n    }\n}"
+								},
+								"url": {
+									"raw": "{{instanceUrl}}/services/data/v{{version}}/einstein/llm/embeddings",
+									"host": [
+										"{{instanceUrl}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"einstein",
+										"llm",
+										"embeddings"
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"auth": {
+						"type": "bearer",
+						"bearer": [
+							{
+								"key": "token",
+								"value": "{{_accessToken}}",
+								"type": "string"
+							}
+						]
+					},
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									""
+								]
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									""
+								]
+							}
+						}
+					]
+				},
+				{
 					"name": "Metadata Service",
 					"item": [
 						{
